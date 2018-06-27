@@ -2,7 +2,6 @@ package simulator
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
@@ -41,31 +40,48 @@ func New(conf *config.Configuration) *Simulator {
 }
 
 func (s *Simulator) Simulate() error {
+	identities := make(map[string]string)
+
 	matchingServices := make([]*matchingservice.MatchingService, 0)
 	for i, seed := range s.conf.MatchingService.Accounts {
-		m, err := matchingservice.New("MATCHING SERVICE "+strconv.Itoa(i), seed, s.sdkClient, s.conf.MatchingService)
+		m, err := matchingservice.New("m"+util.StringFromNum(i), seed, s.sdkClient, s.conf.MatchingService)
 		if err != nil {
 			return err
 		}
+
+		identities[m.Account.AccountNumber()] = m.Name
 		matchingServices = append(matchingServices, m)
 	}
 
 	sponsors := make([]*sponsor.Sponsor, 0)
 	for i, seed := range s.conf.Sponsors.Accounts {
-		s, err := sponsor.New("SPONSOR "+strconv.Itoa(i), seed, s.sdkClient, s.conf.Sponsors)
+		s, err := sponsor.New("s"+util.StringFromNum(i), seed, s.sdkClient, s.conf.Sponsors)
 		if err != nil {
 			return err
 		}
+		identities[s.Account.AccountNumber()] = s.Name
 		sponsors = append(sponsors, s)
 	}
 
 	participants := make([]*participant.Participant, 0)
 	for i := 1; i < s.conf.Participants.ParticipantNum; i++ {
-		pp, err := participant.New("PARTICIPANT "+strconv.Itoa(i), s.sdkClient, s.conf.Participants)
+		pp, err := participant.New("p"+util.StringFromNum(i), s.sdkClient, s.conf.Participants)
 		if err != nil {
 			return err
 		}
+		identities[pp.Account.AccountNumber()] = pp.Name
 		participants = append(participants, pp)
+	}
+
+	// Add identities
+	for _, ss := range sponsors {
+		ss.Identities = identities
+	}
+	for _, ms := range matchingServices {
+		ms.Identities = identities
+	}
+	for _, pp := range participants {
+		pp.Identities = identities
 	}
 
 	// Register trial bitmark from sponsor
@@ -86,7 +102,7 @@ func (s *Simulator) Simulate() error {
 	util.WaitForConfirmations(trialBitmarkIds, s.conf.Network, s.httpClient)
 
 	// Sleep for 2 seconds (workaround)
-	time.Sleep(5 * time.Second)
+	time.Sleep(15 * time.Second)
 
 	// Issue more from matching service
 	moreTrialBitmarkIDs := make([]string, 0)
@@ -104,7 +120,7 @@ func (s *Simulator) Simulate() error {
 
 	// Send to participant
 	for _, ms := range matchingServices {
-		_, err := ms.SendTrialToParticipant(participants)
+		_, err := ms.SendTrialToParticipant(participants, s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}
@@ -113,7 +129,7 @@ func (s *Simulator) Simulate() error {
 	//Ask for acceptance from participants
 	sendToParticipantTxs := make([]string, 0)
 	for _, pp := range participants {
-		trialTXs, err := pp.ProcessRecevingTrialBitmark(participant.ProcessReceivingTrialBitmarkFromMatchingService)
+		trialTXs, err := pp.ProcessRecevingTrialBitmark(participant.ProcessReceivingTrialBitmarkFromMatchingService, s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}
@@ -135,6 +151,9 @@ func (s *Simulator) Simulate() error {
 		medicalBitmarkIDs = append(medicalBitmarkIDs, bitmarkIDs...)
 	}
 
+	// Sleep for 15 seconds (workaround)
+	time.Sleep(15 * time.Second)
+
 	// Wait for bitmarks to be confirmed
 	util.WaitForConfirmations(medicalBitmarkIDs, s.conf.Network, s.httpClient)
 
@@ -154,7 +173,7 @@ func (s *Simulator) Simulate() error {
 	// Accept the medical data and trial from participants
 	trialAndMedicalTxs := make(map[string]string)
 	for _, ms := range matchingServices {
-		txs, err := ms.AcceptTrialBackAndMedicalData(trialAndMedicalOfferIDs)
+		txs, err := ms.AcceptTrialBackAndMedicalData(trialAndMedicalOfferIDs, s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}
@@ -189,7 +208,7 @@ func (s *Simulator) Simulate() error {
 	acceptTrialAndMedicalFromSponsorTxs := make(map[string]string)
 	acceptTrialAndMedicalFromSponsorTxsInArray := make([]string, 0)
 	for _, ss := range sponsors {
-		txs, err := ss.AcceptTrialBackAndMedicalData(evaluationMatchingServiceOfferIDs)
+		txs, err := ss.AcceptTrialBackAndMedicalData(evaluationMatchingServiceOfferIDs, s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}
@@ -224,7 +243,7 @@ func (s *Simulator) Simulate() error {
 	// Accept transfer from participants
 	sendFromSponsorToParticipantTxs := make([]string, 0)
 	for _, pp := range participants {
-		trialTXs, err := pp.ProcessRecevingTrialBitmark(participant.ProcessReceivingTrialBitmarkFromSponsor)
+		trialTXs, err := pp.ProcessRecevingTrialBitmark(participant.ProcessReceivingTrialBitmarkFromSponsor, s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}

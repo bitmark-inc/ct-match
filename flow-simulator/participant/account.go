@@ -2,7 +2,6 @@ package participant
 
 import (
 	"net/http"
-	"strconv"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/pfizer/flow-simulator/config"
@@ -25,6 +24,7 @@ type Participant struct {
 	apiClient            *sdk.Client
 	Name                 string
 	conf                 config.ParticipantsConf
+	Identities           map[string]string
 	waitingTransferOffer []string
 	holdingConsentTxs    []string
 	issuedMedicalData    map[string]string // Map between a consent tx and a bitmark id of medical data
@@ -36,7 +36,7 @@ func New(name string, client *sdk.Client, conf config.ParticipantsConf) (*Partic
 		return nil, err
 	}
 
-	c.Println(tag + "Initialize participant with bitmark account: " + acc.AccountNumber())
+	// c.Println(tag + "Initialize participant with bitmark account: " + acc.AccountNumber())
 
 	return &Participant{
 		Account:              acc,
@@ -48,8 +48,8 @@ func New(name string, client *sdk.Client, conf config.ParticipantsConf) (*Partic
 	}, nil
 }
 
-func (p *Participant) ProcessRecevingTrialBitmark(fromcase int) ([]string, error) {
-	p.print("Participant has " + strconv.Itoa(len(p.waitingTransferOffer)) + " transfer requests")
+func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, httpClient *http.Client) ([]string, error) {
+	// p.print("Participant has " + strconv.Itoa(len(p.waitingTransferOffer)) + " transfer requests")
 	txIDs := make([]string, 0)
 	var prob float64
 	switch fromcase {
@@ -58,20 +58,38 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int) ([]string, error
 	case ProcessReceivingTrialBitmarkFromSponsor:
 		prob = p.conf.AcceptMatchProb
 	}
-	for i, offerID := range p.waitingTransferOffer {
+	for _, offerID := range p.waitingTransferOffer {
 		isAccepted := util.RandWithProb(prob)
-		var action string
-		if isAccepted {
-			action = "accept"
-		} else {
-			action = "reject"
-		}
-
-		p.print("Process transfer " + strconv.Itoa(i) + " with action: " + action)
 
 		transferOffer, err := p.apiClient.GetTransferOfferById(offerID)
 		if err != nil {
 			return nil, err
+		}
+
+		bitmarkInfo, err := util.GetBitmarkInfo(transferOffer.BitmarkId, network, httpClient)
+		if err != nil {
+			return nil, err
+		}
+
+		var action string
+		if isAccepted {
+			action = "accept"
+
+			switch fromcase {
+			case ProcessReceivingTrialBitmarkFromMatchingService:
+				c.Printf("%s accepted consent bitmark %s for trial %s from %s and is considering participation.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
+			case ProcessReceivingTrialBitmarkFromSponsor:
+				c.Printf("%s signed for acceptance of consent bitmark %s from %s and has been successfully entered as a participant in trial %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+			}
+		} else {
+			action = "reject"
+
+			switch fromcase {
+			case ProcessReceivingTrialBitmarkFromMatchingService:
+				c.Printf("%s rejected consent bitmark %s for trial %s from %s.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
+			case ProcessReceivingTrialBitmarkFromSponsor:
+				c.Printf("%s has opted to reject acceptace of consent bitmark %s from %s and refused the invitation to participate in trial %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+			}
 		}
 
 		counterSign, err := transferOffer.Record.Countersign(p.Account)
@@ -128,6 +146,16 @@ func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Clie
 		}
 
 		transferOfferIDs[trialOfferID] = medicalOfferID
+
+		// Get bitmark info of trial
+		bitmarkInfo, err := util.GetBitmarkInfo(txInfo.BitmarkID, network, httpClient)
+		if err != nil {
+			return nil, err
+		}
+
+		identityForReceiver := p.Identities[previousTxInfo.Owner]
+
+		c.Printf("%s issued health data bitmark %s for trial %s and sent it to %s for evaluation along with consent bitmark %s.\n", p.Name, medicalBitmarkID, bitmarkInfo.Asset.Name, identityForReceiver, txInfo.BitmarkID)
 	}
 	return transferOfferIDs, nil
 }
@@ -147,7 +175,6 @@ func (p *Participant) IssueMedicalDataBitmark(network string, httpClient *http.C
 
 		bitmarkID := bitmarkIDs[0]
 
-		p.print("Issued medical data with bitmark id: ", bitmarkID)
 		p.issuedMedicalData[tx] = bitmarkID
 	}
 
