@@ -86,7 +86,7 @@ func (s *Simulator) Simulate() error {
 	util.WaitForConfirmations(trialBitmarkIds, s.conf.Network, s.httpClient)
 
 	// Sleep for 2 seconds (workaround)
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// Issue more from matching service
 	moreTrialBitmarkIDs := make([]string, 0)
@@ -113,7 +113,7 @@ func (s *Simulator) Simulate() error {
 	//Ask for acceptance from participants
 	sendToParticipantTxs := make([]string, 0)
 	for _, pp := range participants {
-		trialTXs, err := pp.ProcessRecevingTrialBitmark()
+		trialTXs, err := pp.ProcessRecevingTrialBitmark(participant.ProcessReceivingTrialBitmarkFromMatchingService)
 		if err != nil {
 			return err
 		}
@@ -121,17 +121,119 @@ func (s *Simulator) Simulate() error {
 		sendToParticipantTxs = append(sendToParticipantTxs, trialTXs...)
 	}
 
-	// Wait for bitmark to be confirmed
+	// Wait for transactions to be confirmed
 	util.WaitForConfirmations(sendToParticipantTxs, s.conf.Network, s.httpClient)
 
+	// Issue medical data from participants that received the trial
+	medicalBitmarkIDs := make([]string, 0)
 	for _, pp := range participants {
-		trialTXs, err := pp.ProcessRecevingTrialBitmark()
+		bitmarkIDs, err := pp.IssueMedicalDataBitmark(s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}
 
-		sendToParticipantTxs = append(sendToParticipantTxs, trialTXs...)
+		medicalBitmarkIDs = append(medicalBitmarkIDs, bitmarkIDs...)
 	}
+
+	// Wait for bitmarks to be confirmed
+	util.WaitForConfirmations(medicalBitmarkIDs, s.conf.Network, s.httpClient)
+
+	// Send back the trial bitmark and medical data to matching service
+	trialAndMedicalOfferIDs := make(map[string]string)
+	for _, pp := range participants {
+		offerIDs, err := pp.SendBackTrialBitmark(s.conf.Network, s.httpClient)
+		if err != nil {
+			return err
+		}
+
+		for k, v := range offerIDs {
+			trialAndMedicalOfferIDs[k] = v
+		}
+	}
+
+	// Accept the medical data and trial from participants
+	trialAndMedicalTxs := make(map[string]string)
+	for _, ms := range matchingServices {
+		txs, err := ms.AcceptTrialBackAndMedicalData(trialAndMedicalOfferIDs)
+		if err != nil {
+			return err
+		}
+
+		for k, v := range txs {
+			trialAndMedicalTxs[k] = v
+		}
+	}
+
+	// Wait for bitmarks to be confirmed
+	trialAndMedicalTxsInArray := make([]string, 0)
+	for k, v := range trialAndMedicalTxs {
+		trialAndMedicalTxsInArray = append(trialAndMedicalTxsInArray, k)
+		trialAndMedicalTxsInArray = append(trialAndMedicalTxsInArray, v)
+	}
+	util.WaitForConfirmations(trialAndMedicalTxsInArray, s.conf.Network, s.httpClient)
+
+	// Evaluate the trial from participants
+	evaluationMatchingServiceOfferIDs := make(map[string]string)
+	for _, ms := range matchingServices {
+		txs, err := ms.EvaluateTrialFromParticipant(trialAndMedicalTxs, s.conf.Network, s.httpClient)
+		if err != nil {
+			return err
+		}
+
+		for k, v := range txs {
+			evaluationMatchingServiceOfferIDs[k] = v
+		}
+	}
+
+	// Accept receiving from sponsors
+	acceptTrialAndMedicalFromSponsorTxs := make(map[string]string)
+	acceptTrialAndMedicalFromSponsorTxsInArray := make([]string, 0)
+	for _, ss := range sponsors {
+		txs, err := ss.AcceptTrialBackAndMedicalData(evaluationMatchingServiceOfferIDs)
+		if err != nil {
+			return err
+		}
+
+		for k, v := range txs {
+			acceptTrialAndMedicalFromSponsorTxs[k] = v
+			acceptTrialAndMedicalFromSponsorTxsInArray = append(acceptTrialAndMedicalFromSponsorTxsInArray, k)
+			acceptTrialAndMedicalFromSponsorTxsInArray = append(acceptTrialAndMedicalFromSponsorTxsInArray, v)
+		}
+	}
+
+	// Wait for transactions to be confirmed
+	util.WaitForConfirmations(acceptTrialAndMedicalFromSponsorTxsInArray, s.conf.Network, s.httpClient)
+
+	// Evaluate from sponsors
+	for _, ss := range sponsors {
+		offerIDs, err := ss.EvaluateTrialFromSponsor(acceptTrialAndMedicalFromSponsorTxs, s.conf.Network, s.httpClient)
+		if err != nil {
+			return err
+		}
+
+		for offerID, participantAccount := range offerIDs {
+			for _, pp := range participants {
+				if participantAccount == pp.Account.AccountNumber() {
+					pp.AddTransferOffer(offerID)
+					break
+				}
+			}
+		}
+	}
+
+	// Accept transfer from participants
+	sendFromSponsorToParticipantTxs := make([]string, 0)
+	for _, pp := range participants {
+		trialTXs, err := pp.ProcessRecevingTrialBitmark(participant.ProcessReceivingTrialBitmarkFromSponsor)
+		if err != nil {
+			return err
+		}
+
+		sendFromSponsorToParticipantTxs = append(sendFromSponsorToParticipantTxs, trialTXs...)
+	}
+
+	// Wait for transactions to be confirmed
+	util.WaitForConfirmations(sendFromSponsorToParticipantTxs, s.conf.Network, s.httpClient)
 
 	return nil
 }

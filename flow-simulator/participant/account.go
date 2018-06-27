@@ -15,6 +15,11 @@ var (
 	tag = "[PARTICIPANT] "
 )
 
+const (
+	ProcessReceivingTrialBitmarkFromMatchingService int = iota
+	ProcessReceivingTrialBitmarkFromSponsor         int = iota
+)
+
 type Participant struct {
 	Account              *sdk.Account
 	apiClient            *sdk.Client
@@ -22,6 +27,7 @@ type Participant struct {
 	conf                 config.ParticipantsConf
 	waitingTransferOffer []string
 	holdingConsentTxs    []string
+	issuedMedicalData    map[string]string // Map between a consent tx and a bitmark id of medical data
 }
 
 func New(name string, client *sdk.Client, conf config.ParticipantsConf) (*Participant, error) {
@@ -33,18 +39,27 @@ func New(name string, client *sdk.Client, conf config.ParticipantsConf) (*Partic
 	c.Println(tag + "Initialize participant with bitmark account: " + acc.AccountNumber())
 
 	return &Participant{
-		Account:   acc,
-		apiClient: client,
-		Name:      name,
-		conf:      conf,
+		Account:              acc,
+		apiClient:            client,
+		Name:                 name,
+		conf:                 conf,
+		waitingTransferOffer: make([]string, 0),
+		issuedMedicalData:    make(map[string]string),
 	}, nil
 }
 
-func (p *Participant) ProcessRecevingTrialBitmark() ([]string, error) {
+func (p *Participant) ProcessRecevingTrialBitmark(fromcase int) ([]string, error) {
 	p.print("Participant has " + strconv.Itoa(len(p.waitingTransferOffer)) + " transfer requests")
 	txIDs := make([]string, 0)
+	var prob float64
+	switch fromcase {
+	case ProcessReceivingTrialBitmarkFromMatchingService:
+		prob = p.conf.AcceptTrialInviteProb
+	case ProcessReceivingTrialBitmarkFromSponsor:
+		prob = p.conf.AcceptMatchProb
+	}
 	for i, offerID := range p.waitingTransferOffer {
-		isAccepted := util.RandWithProb(p.conf.AcceptTrialInviteProb)
+		isAccepted := util.RandWithProb(prob)
 		var action string
 		if isAccepted {
 			action = "accept"
@@ -71,45 +86,72 @@ func (p *Participant) ProcessRecevingTrialBitmark() ([]string, error) {
 	}
 
 	p.holdingConsentTxs = txIDs
+	p.waitingTransferOffer = make([]string, 0) // Wipe out the waiting list
 
 	return txIDs, nil
 }
 
-func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Client) ([]string, error) {
-	for i, tx := range p.holdingConsentTxs {
+func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Client) (map[string]string, error) {
+	transferOfferIDs := make(map[string]string)
+
+	for _, tx := range p.holdingConsentTxs {
 		txInfo, err := util.GetTXInfo(tx, network, httpClient)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		previousTxInfo, err := util.GetTXInfo(txInfo.PreviousID, network, httpClient)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		p.apiClient.Transfer(p.Account, txInfo.BitmarkID, previousTxInfo.Owner)
+		trialTransferOffer, err := sdk.NewTransferOffer(nil, tx, previousTxInfo.Owner, p.Account)
+		if err != nil {
+			return nil, err
+		}
+
+		trialOfferID, err := p.apiClient.SubmitTransferOffer(p.Account, trialTransferOffer, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		// Transfer also the medical data
+		medicalBitmarkID := p.issuedMedicalData[tx]
+		medicalTransferOffer, err := sdk.NewTransferOffer(nil, medicalBitmarkID, previousTxInfo.Owner, p.Account)
+		if err != nil {
+			return nil, err
+		}
+
+		medicalOfferID, err := p.apiClient.SubmitTransferOffer(p.Account, medicalTransferOffer, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		transferOfferIDs[trialOfferID] = medicalOfferID
 	}
-	return
+	return transferOfferIDs, nil
 }
 
-func (p *Participant) IssueMedicalDataBitmark(name, consentBitmarkID string) (string, error) {
-	medicalContent := "MEDICAL DATA\n" + util.RandStringBytesMaskImprSrc(1000)
-	af := sdk.NewAssetFile("medical_data.txt", []byte(medicalContent), sdk.Private)
-	bitmarkIDs, err := p.apiClient.IssueByAssetFile(p.Account, af, 1, &sdk.AssetInfo{
-		Name: "Medical data for " + name,
-		Metadata: map[string]string{
-			"Consent_Bitmark": consentBitmarkID,
-		},
-	})
+func (p *Participant) IssueMedicalDataBitmark(network string, httpClient *http.Client) ([]string, error) {
+	bitmarkIDs := make([]string, 0)
+	for _, tx := range p.holdingConsentTxs {
+		medicalContent := "MEDICAL DATA\n" + util.RandStringBytesMaskImprSrc(1000)
+		af := sdk.NewAssetFile("medical_data.txt", []byte(medicalContent), sdk.Private)
+		bitmarkIDs, err := p.apiClient.IssueByAssetFile(p.Account, af, 1, &sdk.AssetInfo{
+			Name: "Medical data",
+		})
 
-	if err != nil {
-		return "", err
+		if err != nil {
+			return nil, err
+		}
+
+		bitmarkID := bitmarkIDs[0]
+
+		p.print("Issued medical data with bitmark id: ", bitmarkID)
+		p.issuedMedicalData[tx] = bitmarkID
 	}
 
-	bitmarkID := bitmarkIDs[0]
-
-	p.print("Issued medical data with bitmark id: ", bitmarkID)
-	return bitmarkID, nil
+	return bitmarkIDs, nil
 }
 
 func (p *Participant) AddTransferOffer(offerId string) {

@@ -124,3 +124,43 @@ func GetTXInfo(tx string, network string, httpClient *http.Client) (*BitmarkTx, 
 
 	return &data.Tx, nil
 }
+
+type Bitmark struct {
+	ID          string    `json:"id"`
+	HeadID      string    `json:"head_id"`
+	Owner       string    `json:"owner"`
+	Issuer      string    `json:"issuer"`
+	IssuedAt    time.Time `json:"issued_at"`
+	BlockNumber int       `json:"block_number"`
+	Offset      int64     `json:"offset"`
+	Status      string    `json:"status"`
+}
+
+type Asset struct {
+	ID         string            `json:"id"`
+	Name       string            `json:"name"`
+	Metadata   map[string]string `json:"metadata"`
+	Registrant string            `json:"registrant"`
+}
+
+type BitmarkInfo struct {
+	Bitmark Bitmark `json:"bitmark"`
+	Asset   Asset   `json:"asset"`
+}
+
+func GetBitmarkInfo(bitmarkID string, network string, httpClient *http.Client) (*BitmarkInfo, error) {
+	bitmarkInfoURL := apiEndpoint(network) + "/v1/bitmarks/" + bitmarkID + "?asset=true"
+	resp, err := httpClient.Get(bitmarkInfoURL)
+	if err != nil {
+		return nil, err
+	}
+
+	var bitmarkInfo BitmarkInfo
+
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&bitmarkInfo); err != nil {
+		return nil, err
+	}
+
+	return &bitmarkInfo, nil
+}

@@ -1,6 +1,7 @@
 package sponsor
 
 import (
+	"net/http"
 	"strconv"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
@@ -71,4 +72,104 @@ func (s *Sponsor) RegisterNewTrial() ([]string, []string, error) {
 	}
 
 	return trialBitmarkIds, trialAssetIds, nil
+}
+
+func (s *Sponsor) AcceptTrialBackAndMedicalData(offerIDs map[string]string) (map[string]string, error) {
+	txs := make(map[string]string)
+	for trialOfferID, medicalOfferID := range offerIDs {
+		// Accept trial offer id
+		trialTransferOffer, err := s.apiClient.GetTransferOfferById(trialOfferID)
+		if err != nil {
+			return nil, err
+		}
+
+		if trialTransferOffer.To == s.Account.AccountNumber() {
+			trialCounterSign, err := trialTransferOffer.Record.Countersign(s.Account)
+			if err != nil {
+				return nil, err
+			}
+
+			trialTxID, err := s.apiClient.CompleteTransferOffer(s.Account, trialOfferID, "accept", trialCounterSign.Countersignature)
+
+			// Accept medical offer id
+			medicalTransferOffer, err := s.apiClient.GetTransferOfferById(medicalOfferID)
+			if err != nil {
+				return nil, err
+			}
+
+			medicalCounterSign, err := medicalTransferOffer.Record.Countersign(s.Account)
+			if err != nil {
+				return nil, err
+			}
+
+			medicalTxID, err := s.apiClient.CompleteTransferOffer(s.Account, medicalOfferID, "accept", medicalCounterSign.Countersignature)
+
+			txs[trialTxID] = medicalTxID
+		}
+
+	}
+
+	return txs, nil
+}
+
+func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string, httpClient *http.Client) (map[string]string, error) {
+	offerIDs := make(map[string]string)
+	for trialTx, medicalTx := range txs {
+		txInfo, err := util.GetTXInfo(trialTx, network, httpClient)
+		if err != nil {
+			return nil, err
+		}
+
+		if txInfo.Owner != s.Account.AccountNumber() {
+			continue
+		}
+
+		if util.RandWithProb(s.conf.DataApprovalProb) {
+			s.print("Accept the data for tx: " + trialTx)
+
+			bitmarkInfo, err := util.GetBitmarkInfo(txInfo.BitmarkID, network, httpClient)
+			if err != nil {
+				return nil, err
+			}
+
+			participantAccount := bitmarkInfo.Bitmark.Issuer
+
+			// Send bitmark to its participant
+			trialTransferOffer, err := sdk.NewTransferOffer(nil, trialTx, participantAccount, s.Account)
+			if err != nil {
+				return nil, err
+			}
+
+			trialOfferID, err := s.apiClient.SubmitTransferOffer(s.Account, trialTransferOffer, nil)
+			if err != nil {
+				return nil, err
+			}
+
+			offerIDs[trialOfferID] = participantAccount
+		} else {
+			s.print("Reject the data for tx: " + trialTx)
+			// Get previous owner
+			previousTxInfo, err := util.GetTXInfo(txInfo.PreviousID, network, httpClient)
+			if err != nil {
+				return nil, err
+			}
+			previousOwner := previousTxInfo.Owner
+
+			// Get bitmark id of medical tx
+			medicalTXInfo, err := util.GetTXInfo(medicalTx, network, httpClient)
+
+			// Transfer bitmarks back to previous owner by one signature
+			_, err = s.apiClient.Transfer(s.Account, txInfo.BitmarkID, previousOwner)
+			if err != nil {
+				return nil, err
+			}
+
+			_, err = s.apiClient.Transfer(s.Account, medicalTXInfo.BitmarkID, previousOwner)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return offerIDs, nil
 }
