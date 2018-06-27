@@ -25,7 +25,7 @@ type Simulator struct {
 
 func New(conf *config.Configuration) *Simulator {
 	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 20 * time.Second,
 	}
 	c := sdk.NewClient(&sdk.Config{
 		HTTPClient: httpClient,
@@ -44,7 +44,7 @@ func (s *Simulator) Simulate() error {
 
 	matchingServices := make([]*matchingservice.MatchingService, 0)
 	for i, seed := range s.conf.MatchingService.Accounts {
-		m, err := matchingservice.New("m"+util.StringFromNum(i), seed, s.sdkClient, s.conf.MatchingService)
+		m, err := matchingservice.New("m"+util.StringFromNum(i+1), seed, s.sdkClient, s.conf.MatchingService)
 		if err != nil {
 			return err
 		}
@@ -55,7 +55,7 @@ func (s *Simulator) Simulate() error {
 
 	sponsors := make([]*sponsor.Sponsor, 0)
 	for i, seed := range s.conf.Sponsors.Accounts {
-		s, err := sponsor.New("s"+util.StringFromNum(i), seed, s.sdkClient, s.conf.Sponsors)
+		s, err := sponsor.New("s"+util.StringFromNum(i+1), seed, s.sdkClient, s.conf.Sponsors)
 		if err != nil {
 			return err
 		}
@@ -64,8 +64,8 @@ func (s *Simulator) Simulate() error {
 	}
 
 	participants := make([]*participant.Participant, 0)
-	for i := 1; i < s.conf.Participants.ParticipantNum; i++ {
-		pp, err := participant.New("p"+util.StringFromNum(i), s.sdkClient, s.conf.Participants)
+	for i := 0; i < s.conf.Participants.ParticipantNum; i++ {
+		pp, err := participant.New("p"+util.StringFromNum(i+1), s.sdkClient, s.conf.Participants)
 		if err != nil {
 			return err
 		}
@@ -103,6 +103,9 @@ func (s *Simulator) Simulate() error {
 	// Wait for bitmark to be confirmed
 	util.WaitForConfirmations(trialBitmarkIds, s.conf.Network, s.httpClient)
 
+	// Workaround, sleep for 10s
+	time.Sleep(10 * time.Second)
+
 	// Issue more from matching service
 	moreTrialBitmarkIDs := make([]string, 0)
 	for _, ms := range matchingServices {
@@ -113,8 +116,6 @@ func (s *Simulator) Simulate() error {
 
 		moreTrialBitmarkIDs = append(moreTrialBitmarkIDs, bitmarkIDs...)
 	}
-
-	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for bitmark to be confirmed
 	util.WaitForConfirmations(moreTrialBitmarkIDs, s.conf.Network, s.httpClient)
@@ -160,6 +161,9 @@ func (s *Simulator) Simulate() error {
 
 	// Wait for bitmarks to be confirmed
 	util.WaitForConfirmations(medicalBitmarkIDs, s.conf.Network, s.httpClient)
+
+	// Workaround, sleep for 10s
+	time.Sleep(10 * time.Second)
 
 	// Send back the trial bitmark and medical data to matching service
 	trialAndMedicalOfferIDs := make(map[string]string)
@@ -216,7 +220,6 @@ func (s *Simulator) Simulate() error {
 
 	// Accept receiving from sponsors
 	acceptTrialAndMedicalFromSponsorTxs := make(map[string]string)
-	acceptTrialAndMedicalFromSponsorTxsInArray := make([]string, 0)
 	for _, ss := range sponsors {
 		txs, err := ss.AcceptTrialBackAndMedicalData(evaluationMatchingServiceOfferIDs, s.conf.Network, s.httpClient)
 		if err != nil {
@@ -225,15 +228,20 @@ func (s *Simulator) Simulate() error {
 
 		for k, v := range txs {
 			acceptTrialAndMedicalFromSponsorTxs[k] = v
-			acceptTrialAndMedicalFromSponsorTxsInArray = append(acceptTrialAndMedicalFromSponsorTxsInArray, k)
-			acceptTrialAndMedicalFromSponsorTxsInArray = append(acceptTrialAndMedicalFromSponsorTxsInArray, v)
 		}
 	}
 
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for transactions to be confirmed
+	acceptTrialAndMedicalFromSponsorTxsInArray := make([]string, 0)
+	for k, v := range acceptTrialAndMedicalFromSponsorTxs {
+		acceptTrialAndMedicalFromSponsorTxsInArray = append(acceptTrialAndMedicalFromSponsorTxsInArray, k)
+		acceptTrialAndMedicalFromSponsorTxsInArray = append(acceptTrialAndMedicalFromSponsorTxsInArray, v)
+	}
 	util.WaitForConfirmations(acceptTrialAndMedicalFromSponsorTxsInArray, s.conf.Network, s.httpClient)
+
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Evaluate from sponsors
 	for _, ss := range sponsors {

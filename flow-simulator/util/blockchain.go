@@ -66,7 +66,7 @@ func isTXsConfirmed(txs []string, network string, httpClient *http.Client) bool 
 }
 
 func WaitForConfirmation(tx string, network string, httpClient *http.Client) error {
-	fmt.Println("Waiting for comfirmation for tx: ", tx)
+	fmt.Println("Waiting for confirmations")
 	for {
 		confirmed, err := isTXConfirmed(tx, network, httpClient)
 		if err != nil {
@@ -83,12 +83,12 @@ func WaitForConfirmation(tx string, network string, httpClient *http.Client) err
 }
 
 func WaitForConfirmations(txs []string, network string, httpClient *http.Client) {
-	fmt.Printf("Waiting for comfirmation for tx: %+v\n", txs)
+	fmt.Println("Waiting for confirmations")
 	for {
 		confirmed := isTXsConfirmed(txs, network, httpClient)
 
 		if confirmed {
-			fmt.Println("Transaction is confirmed")
+			fmt.Println("Transactions are confirmed")
 			return
 		}
 

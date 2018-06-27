@@ -50,7 +50,7 @@ func (m *MatchingService) IssueMoreTrial(assetIDs []string) ([]string, error) {
 			}
 
 			issueMoreBitmarkIDs = append(issueMoreBitmarkIDs, bitmarkIDs...)
-			m.print("Issued more trial bitmark: ", bitmarkIDs[0])
+			// m.print("Issued more trial bitmark: ", bitmarkIDs[0])
 		}
 	}
 	m.issueMoreBitmarkIDs = issueMoreBitmarkIDs
@@ -128,9 +128,11 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 			if err != nil {
 				return nil, err
 			}
-			c.Printf("%s signed for acceptance of health data bitmark %s for trial %s from %s and is evaluating it.\n", m.Name, medicalTransferOffer.BitmarkId, medicalBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
 
 			txs[trialTxID] = medicalTxID
+
+			c.Printf("%s signed for acceptance of health data bitmark %s for trial %s from %s and is evaluating it.\n", m.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
+
 		}
 
 	}
