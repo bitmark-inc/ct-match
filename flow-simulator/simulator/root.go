@@ -98,11 +98,10 @@ func (s *Simulator) Simulate() error {
 		trialAssetIds = append(trialAssetIds, assetIds...)
 	}
 
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
+
 	// Wait for bitmark to be confirmed
 	util.WaitForConfirmations(trialBitmarkIds, s.conf.Network, s.httpClient)
-
-	// Sleep for 2 seconds (workaround)
-	time.Sleep(15 * time.Second)
 
 	// Issue more from matching service
 	moreTrialBitmarkIDs := make([]string, 0)
@@ -115,6 +114,8 @@ func (s *Simulator) Simulate() error {
 		moreTrialBitmarkIDs = append(moreTrialBitmarkIDs, bitmarkIDs...)
 	}
 
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
+
 	// Wait for bitmark to be confirmed
 	util.WaitForConfirmations(moreTrialBitmarkIDs, s.conf.Network, s.httpClient)
 
@@ -126,6 +127,8 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
+
 	//Ask for acceptance from participants
 	sendToParticipantTxs := make([]string, 0)
 	for _, pp := range participants {
@@ -136,6 +139,8 @@ func (s *Simulator) Simulate() error {
 
 		sendToParticipantTxs = append(sendToParticipantTxs, trialTXs...)
 	}
+
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for transactions to be confirmed
 	util.WaitForConfirmations(sendToParticipantTxs, s.conf.Network, s.httpClient)
@@ -151,8 +156,7 @@ func (s *Simulator) Simulate() error {
 		medicalBitmarkIDs = append(medicalBitmarkIDs, bitmarkIDs...)
 	}
 
-	// Sleep for 15 seconds (workaround)
-	time.Sleep(15 * time.Second)
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for bitmarks to be confirmed
 	util.WaitForConfirmations(medicalBitmarkIDs, s.conf.Network, s.httpClient)
@@ -170,6 +174,8 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
+
 	// Accept the medical data and trial from participants
 	trialAndMedicalTxs := make(map[string]string)
 	for _, ms := range matchingServices {
@@ -182,6 +188,8 @@ func (s *Simulator) Simulate() error {
 			trialAndMedicalTxs[k] = v
 		}
 	}
+
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for bitmarks to be confirmed
 	trialAndMedicalTxsInArray := make([]string, 0)
@@ -204,6 +212,8 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
+
 	// Accept receiving from sponsors
 	acceptTrialAndMedicalFromSponsorTxs := make(map[string]string)
 	acceptTrialAndMedicalFromSponsorTxsInArray := make([]string, 0)
@@ -219,6 +229,8 @@ func (s *Simulator) Simulate() error {
 			acceptTrialAndMedicalFromSponsorTxsInArray = append(acceptTrialAndMedicalFromSponsorTxsInArray, v)
 		}
 	}
+
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for transactions to be confirmed
 	util.WaitForConfirmations(acceptTrialAndMedicalFromSponsorTxsInArray, s.conf.Network, s.httpClient)
@@ -239,6 +251,8 @@ func (s *Simulator) Simulate() error {
 			}
 		}
 	}
+
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Accept transfer from participants
 	sendFromSponsorToParticipantTxs := make([]string, 0)

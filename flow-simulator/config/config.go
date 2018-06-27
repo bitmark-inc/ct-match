@@ -32,6 +32,7 @@ type ParticipantsConf struct {
 
 type Configuration struct {
 	Network         string              `hcl:"network"`
+	WaitTime        int                 `hcl:"wait_time"`
 	MatchingService MatchingServiceConf `hcl:"matchingService"`
 	Sponsors        SponsorsConf        `hcl:"sponsors"`
 	Participants    ParticipantsConf    `hcl:"participants"`
