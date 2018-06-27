@@ -51,7 +51,7 @@ func (s *Sponsor) RegisterNewTrial() ([]string, []string, error) {
 	trialAssetIds := make([]string, 0)
 
 	for i := 0; i < numberOfTrials; i++ {
-		trialContent := util.RandStringBytesMaskImprSrc(2000)
+		trialContent := "CONSENT #" + strconv.Itoa(i) + "\n" + util.RandStringBytesMaskImprSrc(2000)
 		af := sdk.NewAssetFile("trial.txt", []byte(trialContent), sdk.Public)
 		bitmarkIDs, err := s.apiClient.IssueByAssetFile(s.Account, af, 1, &sdk.AssetInfo{
 			Name: "Trial from Sponsor #" + strconv.Itoa(i),

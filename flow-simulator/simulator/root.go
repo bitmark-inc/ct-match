@@ -1,7 +1,6 @@
 package simulator
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -86,18 +85,19 @@ func (s *Simulator) Simulate() error {
 	// Wait for bitmark to be confirmed
 	util.WaitForConfirmations(trialBitmarkIds, s.conf.Network, s.httpClient)
 
+	// Sleep for 2 seconds (workaround)
+	time.Sleep(2 * time.Second)
+
 	// Issue more from matching service
 	moreTrialBitmarkIDs := make([]string, 0)
 	for _, ms := range matchingServices {
-		moreTrialBitmarkIDs, err := ms.IssueMoreTrial(trialAssetIds)
+		bitmarkIDs, err := ms.IssueMoreTrial(trialAssetIds)
 		if err != nil {
 			return err
 		}
 
-		moreTrialBitmarkIDs = append(moreTrialBitmarkIDs, moreTrialBitmarkIDs...)
+		moreTrialBitmarkIDs = append(moreTrialBitmarkIDs, bitmarkIDs...)
 	}
-
-	fmt.Println("moreTrialBitmarkIDs = %=v\n", moreTrialBitmarkIDs)
 
 	// Wait for bitmark to be confirmed
 	util.WaitForConfirmations(moreTrialBitmarkIDs, s.conf.Network, s.httpClient)
@@ -110,22 +110,28 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
-	// Ask for accpetance from participant
-	// sendBitmarkToParticipantTxID, err := pp.ProcessRecevingTrialBitmark(trialBitmarkOfferID)
-	// if err != nil {
-	// 	return err
-	// }
+	//Ask for acceptance from participants
+	sendToParticipantTxs := make([]string, 0)
+	for _, pp := range participants {
+		trialTXs, err := pp.ProcessRecevingTrialBitmark()
+		if err != nil {
+			return err
+		}
 
-	// if len(sendBitmarkToParticipantTxID) == 0 {
-	// 	// If participant rejected to receive the trial, send bitmark back to issuer
-	// 	pp.SendBackTrialBitmark(sendBitmarkToParticipantTxID, ms.Account.AccountNumber())
-	// 	err = util.WaitForConfirmation(moreTrialBitmarkID, s.conf.Network, s.httpClient)
-	// 	if err != nil {
-	// 		return err
-	// 	}
+		sendToParticipantTxs = append(sendToParticipantTxs, trialTXs...)
+	}
 
-	// 	return nil
-	// }
+	// Wait for bitmark to be confirmed
+	util.WaitForConfirmations(sendToParticipantTxs, s.conf.Network, s.httpClient)
+
+	for _, pp := range participants {
+		trialTXs, err := pp.ProcessRecevingTrialBitmark()
+		if err != nil {
+			return err
+		}
+
+		sendToParticipantTxs = append(sendToParticipantTxs, trialTXs...)
+	}
 
 	return nil
 }

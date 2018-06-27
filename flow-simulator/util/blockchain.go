@@ -101,7 +101,9 @@ type BitmarkTx struct {
 	Owner       string `json:"owner"`
 	BlockNumber int    `json:"block_number"`
 	Offset      int64  `json:"offset"`
+	BitmarkID   string `json:"bitmark_id"`
 	Status      string `json:"status"`
+	PreviousID  string `json:"previous_id"`
 }
 
 func GetTXInfo(tx string, network string, httpClient *http.Client) (*BitmarkTx, error) {
