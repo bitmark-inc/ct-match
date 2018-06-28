@@ -193,7 +193,7 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 			c.Printf("%s approved health data bitmark %s for trial %s and sent it to %s for evaluation\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
 			c.Printf("%s sent consent bitmark %s for trial %s to %s.\n", m.Name, txInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
 		} else {
-			m.print("Reject the matching for tx: " + trialTx)
+			// m.print("Reject the matching for tx: " + trialTx)
 			// Get previous owner
 			previousTxInfo, err := util.GetTXInfo(txInfo.PreviousID, network, httpClient)
 			if err != nil {
@@ -226,7 +226,7 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 				return nil, err
 			}
 
-			c.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
+			c.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, medicalBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
 		}
 	}
 

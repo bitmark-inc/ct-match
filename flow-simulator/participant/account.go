@@ -26,7 +26,7 @@ type Participant struct {
 	conf                 config.ParticipantsConf
 	Identities           map[string]string
 	waitingTransferOffer []string
-	holdingConsentTxs    []string
+	HoldingConsentTxs    []string
 	issuedMedicalData    map[string]string // Map between a consent tx and a bitmark id of medical data
 }
 
@@ -103,7 +103,7 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, 
 		}
 	}
 
-	p.holdingConsentTxs = txIDs
+	p.HoldingConsentTxs = txIDs
 	p.waitingTransferOffer = make([]string, 0) // Wipe out the waiting list
 
 	return txIDs, nil
@@ -112,10 +112,14 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, 
 func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Client) (map[string]string, error) {
 	transferOfferIDs := make(map[string]string)
 
-	for _, tx := range p.holdingConsentTxs {
+	for _, tx := range p.HoldingConsentTxs {
 		txInfo, err := util.GetTXInfo(tx, network, httpClient)
 		if err != nil {
 			return nil, err
+		}
+
+		if txInfo.Owner != p.Account.AccountNumber() {
+			continue
 		}
 
 		previousTxInfo, err := util.GetTXInfo(txInfo.PreviousID, network, httpClient)
@@ -162,11 +166,21 @@ func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Clie
 
 func (p *Participant) IssueMedicalDataBitmark(network string, httpClient *http.Client) ([]string, error) {
 	bitmarkIDs := make([]string, 0)
-	for _, tx := range p.holdingConsentTxs {
+	for _, tx := range p.HoldingConsentTxs {
+		txInfo, err := util.GetTXInfo(tx, network, httpClient)
+		if err != nil {
+			return nil, err
+		}
+
+		bitmarkInfo, err := util.GetBitmarkInfo(txInfo.BitmarkID, network, httpClient)
+		if err != nil {
+			return nil, err
+		}
+
 		medicalContent := "MEDICAL DATA\n" + util.RandStringBytesMaskImprSrc(1000)
 		af := sdk.NewAssetFile("medical_data.txt", []byte(medicalContent), sdk.Private)
 		bitmarkIDs, err := p.apiClient.IssueByAssetFile(p.Account, af, 1, &sdk.AssetInfo{
-			Name: "Medical data",
+			Name: "health_data_" + p.Name + "_" + p.Identities[bitmarkInfo.Asset.Registrant],
 		})
 
 		if err != nil {
