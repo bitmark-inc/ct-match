@@ -136,18 +136,6 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 		}
 
 		if util.RandWithProb(s.conf.DataApprovalProb) {
-			// s.print("Accept the data for tx: " + trialTx)
-
-			participantAccount := bitmarkInfo.Bitmark.Issuer
-
-			// Send bitmark to its participant
-			trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, participantAccount, s.Account, s.apiClient)
-			if err != nil {
-				return nil, err
-			}
-
-			offerIDs[trialOfferID] = participantAccount
-
 			// Get bitmark id of medical tx
 			medicalTXInfo, err := util.GetTXInfo(medicalTx, network, httpClient)
 			if err != nil {
@@ -158,6 +146,16 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 			if err != nil {
 				return nil, err
 			}
+
+			participantAccount := medicalBitmarkInfo.Bitmark.Issuer
+
+			// Send bitmark to its participant
+			trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, participantAccount, s.Account, s.apiClient)
+			if err != nil {
+				return nil, err
+			}
+
+			offerIDs[trialOfferID] = participantAccount
 
 			fmt.Printf("%s approved health data bitmark %s for trial %s from %s for acceptance into trial %s and sent consent bitmark %s to %s for acceptance into trial %s.\n", s.Name, medicalTXInfo.BitmarkID, medicalBitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], medicalBitmarkInfo.Asset.Name, bitmarkInfo.Bitmark.ID, s.Identities[participantAccount], medicalBitmarkInfo.Asset.Name)
 		} else {
