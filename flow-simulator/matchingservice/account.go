@@ -1,6 +1,7 @@
 package matchingservice
 
 import (
+	"fmt"
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
@@ -69,14 +70,10 @@ func (m *MatchingService) SendTrialToParticipant(participantsList []*participant
 			return nil, err
 		}
 
-		c.Printf("%s considered %s for trial %s and found a match. %s issued consent bitmark %s for trial %s and sent it to %s for acceptance\n", m.Name, pp.Name, bitmarkInfo.Asset.Name, m.Name, bitmarkInfo.Bitmark.ID, bitmarkInfo.Asset.Name, pp.Name)
+		fmt.Printf("%s considered %s for trial %s and found a match. %s issued consent bitmark %s for trial %s and sent it to %s for acceptance\n", m.Name, pp.Name, bitmarkInfo.Asset.Name, m.Name, bitmarkInfo.Bitmark.ID, bitmarkInfo.Asset.Name, pp.Name)
 
-		transferOffer, err := sdk.NewTransferOffer(nil, issueMoreBitmarkID, pp.Account.AccountNumber(), m.Account)
-		if err != nil {
-			return nil, err
-		}
+		offerID, err := util.TryToSubmitTransfer(issueMoreBitmarkID, pp.Account.AccountNumber(), m.Account, m.apiClient)
 
-		offerID, err := m.apiClient.SubmitTransferOffer(m.Account, transferOffer, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -98,18 +95,17 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 		}
 
 		if trialTransferOffer.To == m.Account.AccountNumber() {
-			trialCounterSign, err := trialTransferOffer.Record.Countersign(m.Account)
-			if err != nil {
-				return nil, err
-			}
-
 			trialBitmarkInfo, err := util.GetBitmarkInfo(trialTransferOffer.BitmarkId, network, httpClient)
 			if err != nil {
 				return nil, err
 			}
 
-			trialTxID, err := m.apiClient.CompleteTransferOffer(m.Account, trialOfferID, "accept", trialCounterSign.Countersignature)
-			c.Printf("%s signed for acceptance of consent data bitmark %s for trial %s from %s.\n", m.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[trialBitmarkInfo.Asset.Registrant])
+			trialTxID, err := util.TryToActionTransfer(trialTransferOffer, "accept", m.Account, m.apiClient)
+			if err != nil {
+				return nil, err
+			}
+
+			fmt.Printf("%s signed for acceptance of consent data bitmark %s for trial %s from %s.\n", m.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[trialBitmarkInfo.Asset.Registrant])
 
 			// Accept medical offer id
 			medicalTransferOffer, err := m.apiClient.GetTransferOfferById(medicalOfferID)
@@ -117,12 +113,10 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 				return nil, err
 			}
 
-			medicalCounterSign, err := medicalTransferOffer.Record.Countersign(m.Account)
+			medicalTxID, err := util.TryToActionTransfer(medicalTransferOffer, "accept", m.Account, m.apiClient)
 			if err != nil {
 				return nil, err
 			}
-
-			medicalTxID, err := m.apiClient.CompleteTransferOffer(m.Account, medicalOfferID, "accept", medicalCounterSign.Countersignature)
 
 			medicalBitmarkInfo, err := util.GetBitmarkInfo(medicalTransferOffer.BitmarkId, network, httpClient)
 			if err != nil {
@@ -131,7 +125,7 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 
 			txs[trialTxID] = medicalTxID
 
-			c.Printf("%s signed for acceptance of health data bitmark %s for trial %s from %s and is evaluating it.\n", m.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s signed for acceptance of health data bitmark %s for trial %s from %s and is evaluating it.\n", m.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
 
 		}
 
@@ -161,28 +155,10 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 			}
 
 			// Send bitmark to its asset's registrant
-			trialTransferOffer, err := sdk.NewTransferOffer(nil, trialTx, bitmarkInfo.Asset.Registrant, m.Account)
+			trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, bitmarkInfo.Asset.Registrant, m.Account, m.apiClient)
 			if err != nil {
 				return nil, err
 			}
-
-			trialOfferID, err := m.apiClient.SubmitTransferOffer(m.Account, trialTransferOffer, nil)
-			if err != nil {
-				return nil, err
-			}
-
-			// Transfer also the medical data
-			medicalTransferOffer, err := sdk.NewTransferOffer(nil, medicalTx, bitmarkInfo.Asset.Registrant, m.Account)
-			if err != nil {
-				return nil, err
-			}
-
-			medicalOfferID, err := m.apiClient.SubmitTransferOffer(m.Account, medicalTransferOffer, nil)
-			if err != nil {
-				return nil, err
-			}
-
-			offerIDs[trialOfferID] = medicalOfferID
 
 			// Get bitmark information to print out
 			medicalTxInfo, err := util.GetTXInfo(medicalTx, network, httpClient)
@@ -190,8 +166,17 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 				return nil, err
 			}
 
-			c.Printf("%s approved health data bitmark %s for trial %s and sent it to %s for evaluation\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
-			c.Printf("%s sent consent bitmark %s for trial %s to %s.\n", m.Name, txInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
+			// Transfer also the medical data
+			medicalOfferID, err := util.TryToSubmitTransfer(medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Registrant, m.Account, m.apiClient)
+
+			if err != nil {
+				return nil, err
+			}
+
+			offerIDs[trialOfferID] = medicalOfferID
+
+			fmt.Printf("%s approved health data bitmark %s for trial %s and sent it to %s for evaluation\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s sent consent bitmark %s for trial %s to %s.\n", m.Name, txInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
 		} else {
 			// m.print("Reject the matching for tx: " + trialTx)
 			// Get previous owner
@@ -205,12 +190,12 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 			medicalTXInfo, err := util.GetTXInfo(medicalTx, network, httpClient)
 
 			// Transfer bitmarks back to previous owner by one signature
-			_, err = m.apiClient.Transfer(m.Account, txInfo.BitmarkID, previousOwner)
+			_, err = util.TryToTransferOneSignature(m.Account, txInfo.BitmarkID, previousOwner, m.apiClient)
 			if err != nil {
 				return nil, err
 			}
 
-			_, err = m.apiClient.Transfer(m.Account, medicalTXInfo.BitmarkID, previousOwner)
+			_, err = util.TryToTransferOneSignature(m.Account, medicalTXInfo.BitmarkID, previousOwner, m.apiClient)
 			if err != nil {
 				return nil, err
 			}
@@ -226,7 +211,7 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 				return nil, err
 			}
 
-			c.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, medicalBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
+			fmt.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, medicalBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
 		}
 	}
 

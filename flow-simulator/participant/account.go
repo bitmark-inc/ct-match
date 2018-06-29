@@ -1,6 +1,7 @@
 package participant
 
 import (
+	"fmt"
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
@@ -77,27 +78,26 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, 
 
 			switch fromcase {
 			case ProcessReceivingTrialBitmarkFromMatchingService:
-				c.Printf("%s accepted consent bitmark %s for trial %s from %s and is considering participation.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
+				fmt.Printf("%s accepted consent bitmark %s for trial %s from %s and is considering participation.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				c.Printf("%s signed for acceptance of consent bitmark %s from %s and has been successfully entered as a participant in trial %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+				fmt.Printf("%s signed for acceptance of consent bitmark %s from %s and has been successfully entered as a participant in trial %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
 			}
 		} else {
 			action = "reject"
 
 			switch fromcase {
 			case ProcessReceivingTrialBitmarkFromMatchingService:
-				c.Printf("%s rejected consent bitmark %s for trial %s from %s.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
+				fmt.Printf("%s rejected consent bitmark %s for trial %s from %s.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				c.Printf("%s has opted to reject acceptace of consent bitmark %s from %s and refused the invitation to participate in trial %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+				fmt.Printf("%s has opted to reject acceptace of consent bitmark %s from %s and refused the invitation to participate in trial %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
 			}
 		}
 
-		counterSign, err := transferOffer.Record.Countersign(p.Account)
+		txID, err := util.TryToActionTransfer(transferOffer, action, p.Account, p.apiClient)
 		if err != nil {
 			return nil, err
 		}
 
-		txID, err := p.apiClient.CompleteTransferOffer(p.Account, offerID, action, counterSign.Countersignature)
 		if len(txID) > 0 {
 			txIDs = append(txIDs, txID)
 		}
@@ -127,24 +127,14 @@ func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Clie
 			return nil, err
 		}
 
-		trialTransferOffer, err := sdk.NewTransferOffer(nil, tx, previousTxInfo.Owner, p.Account)
-		if err != nil {
-			return nil, err
-		}
-
-		trialOfferID, err := p.apiClient.SubmitTransferOffer(p.Account, trialTransferOffer, nil)
+		trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, previousTxInfo.Owner, p.Account, p.apiClient)
 		if err != nil {
 			return nil, err
 		}
 
 		// Transfer also the medical data
 		medicalBitmarkID := p.issuedMedicalData[tx]
-		medicalTransferOffer, err := sdk.NewTransferOffer(nil, medicalBitmarkID, previousTxInfo.Owner, p.Account)
-		if err != nil {
-			return nil, err
-		}
-
-		medicalOfferID, err := p.apiClient.SubmitTransferOffer(p.Account, medicalTransferOffer, nil)
+		medicalOfferID, err := util.TryToSubmitTransfer(medicalBitmarkID, previousTxInfo.Owner, p.Account, p.apiClient)
 		if err != nil {
 			return nil, err
 		}
@@ -159,7 +149,7 @@ func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Clie
 
 		identityForReceiver := p.Identities[previousTxInfo.Owner]
 
-		c.Printf("%s issued health data bitmark %s for trial %s and sent it to %s for evaluation along with consent bitmark %s.\n", p.Name, medicalBitmarkID, bitmarkInfo.Asset.Name, identityForReceiver, txInfo.BitmarkID)
+		fmt.Printf("%s issued health data bitmark %s for trial %s and sent it to %s for evaluation along with consent bitmark %s.\n", p.Name, medicalBitmarkID, bitmarkInfo.Asset.Name, identityForReceiver, txInfo.BitmarkID)
 	}
 	return transferOfferIDs, nil
 }

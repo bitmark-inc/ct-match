@@ -1,6 +1,7 @@
 package sponsor
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -32,8 +33,6 @@ func New(name, seed string, client *sdk.Client, conf config.SponsorsConf) (*Spon
 		return nil, err
 	}
 
-	c.Println("Initialize sponsor with bitmark account: " + acc.AccountNumber())
-
 	return &Sponsor{
 		Account:   acc,
 		apiClient: client,
@@ -53,11 +52,11 @@ func (s *Sponsor) RegisterNewTrial() ([]string, []string, error) {
 	trialAssetIds := make([]string, 0)
 
 	for i := 0; i < numberOfTrials; i++ {
-		bitmarkName := "bitmark_" + s.Name + "_t" + util.StringFromNum(i)
-		trialContent := "CONSENT #" + strconv.Itoa(i) + "\n" + util.RandStringBytesMaskImprSrc(2000)
+		assetName := "trial_" + s.Name + "_t" + util.StringFromNum(i)
+		trialContent := "TRIAL #" + strconv.Itoa(i) + "\n" + util.RandStringBytesMaskImprSrc(2000)
 		af := sdk.NewAssetFile("asset_"+s.Name+"_t"+util.StringFromNum(i), []byte(trialContent), sdk.Public)
 		bitmarkIDs, err := s.apiClient.IssueByAssetFile(s.Account, af, 1, &sdk.AssetInfo{
-			Name: bitmarkName,
+			Name: assetName,
 			Metadata: map[string]string{
 				"Sponsor": s.Name,
 			},
@@ -71,7 +70,7 @@ func (s *Sponsor) RegisterNewTrial() ([]string, []string, error) {
 		trialBitmarkIds = append(trialBitmarkIds, bitmarkIDs...)
 		trialAssetIds = append(trialAssetIds, af.Id())
 		// s.print("Issued trial bitmark from Sponsor: ", bitmarkID)
-		c.Printf("%s announced a new trial by adding trial %s to the blockchain.\n", s.Name, bitmarkName)
+		fmt.Printf("%s announced %s by adding the trial asset and bitmark to the blockchain.\n", s.Name, assetName)
 	}
 
 	return trialBitmarkIds, trialAssetIds, nil
@@ -87,12 +86,10 @@ func (s *Sponsor) AcceptTrialBackAndMedicalData(offerIDs map[string]string, netw
 		}
 
 		if trialTransferOffer.To == s.Account.AccountNumber() {
-			trialCounterSign, err := trialTransferOffer.Record.Countersign(s.Account)
+			trialTxID, err := util.TryToActionTransfer(trialTransferOffer, "accept", s.Account, s.apiClient)
 			if err != nil {
 				return nil, err
 			}
-
-			trialTxID, err := s.apiClient.CompleteTransferOffer(s.Account, trialOfferID, "accept", trialCounterSign.Countersignature)
 
 			// Accept medical offer id
 			medicalTransferOffer, err := s.apiClient.GetTransferOfferById(medicalOfferID)
@@ -100,12 +97,7 @@ func (s *Sponsor) AcceptTrialBackAndMedicalData(offerIDs map[string]string, netw
 				return nil, err
 			}
 
-			medicalCounterSign, err := medicalTransferOffer.Record.Countersign(s.Account)
-			if err != nil {
-				return nil, err
-			}
-
-			medicalTxID, err := s.apiClient.CompleteTransferOffer(s.Account, medicalOfferID, "accept", medicalCounterSign.Countersignature)
+			medicalTxID, err := util.TryToActionTransfer(medicalTransferOffer, "accept", s.Account, s.apiClient)
 			if err != nil {
 				return nil, err
 			}
@@ -117,8 +109,8 @@ func (s *Sponsor) AcceptTrialBackAndMedicalData(offerIDs map[string]string, netw
 			if err != nil {
 				return nil, err
 			}
-			c.Printf("%s signed for acceptance of health data bitmark %s for trial %s from %s for %s and is evaluating it.\n", s.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, s.Identities[trialBitmarkInfo.Asset.Registrant])
-			c.Printf("%s signed for acceptance of consent bitmark %s for trial %s from %s.\n", s.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, s.Identities[trialBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s signed for acceptance of health data bitmark %s for trial %s from %s for %s and is evaluating it.\n", s.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, s.Identities[trialTransferOffer.From], s.Identities[trialBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s signed for acceptance of consent bitmark %s for trial %s from %s.\n", s.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, s.Identities[trialBitmarkInfo.Asset.Registrant])
 		}
 
 	}
@@ -149,12 +141,7 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 			participantAccount := bitmarkInfo.Bitmark.Issuer
 
 			// Send bitmark to its participant
-			trialTransferOffer, err := sdk.NewTransferOffer(nil, trialTx, participantAccount, s.Account)
-			if err != nil {
-				return nil, err
-			}
-
-			trialOfferID, err := s.apiClient.SubmitTransferOffer(s.Account, trialTransferOffer, nil)
+			trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, participantAccount, s.Account, s.apiClient)
 			if err != nil {
 				return nil, err
 			}
@@ -172,7 +159,7 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 				return nil, err
 			}
 
-			c.Printf("%s approved health data bitmark %s for trial %s from %s for acceptance into trial %s and sent consent bitmark %s to %s for acceptance into trial %s.\n", s.Name, medicalTXInfo.BitmarkID, medicalBitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], medicalBitmarkInfo.Asset.Name, bitmarkInfo.Bitmark.ID, s.Identities[participantAccount], medicalBitmarkInfo.Asset.Name)
+			fmt.Printf("%s approved health data bitmark %s for trial %s from %s for acceptance into trial %s and sent consent bitmark %s to %s for acceptance into trial %s.\n", s.Name, medicalTXInfo.BitmarkID, medicalBitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], medicalBitmarkInfo.Asset.Name, bitmarkInfo.Bitmark.ID, s.Identities[participantAccount], medicalBitmarkInfo.Asset.Name)
 		} else {
 			// s.print("Reject the data for tx: " + trialTx)
 			// Get previous owner
@@ -194,17 +181,17 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 			}
 
 			// Transfer bitmarks back to previous owner by one signature
-			_, err = s.apiClient.Transfer(s.Account, txInfo.BitmarkID, previousOwner)
+			_, err = util.TryToTransferOneSignature(s.Account, txInfo.BitmarkID, previousOwner, s.apiClient)
 			if err != nil {
 				return nil, err
 			}
 
-			_, err = s.apiClient.Transfer(s.Account, medicalTXInfo.BitmarkID, medicalBitmarkInfo.Asset.Registrant)
+			_, err = util.TryToTransferOneSignature(s.Account, medicalTXInfo.BitmarkID, medicalBitmarkInfo.Asset.Registrant, s.apiClient)
 			if err != nil {
 				return nil, err
 			}
 
-			c.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", s.Name, medicalTXInfo.BitmarkID, bitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], s.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", s.Name, medicalTXInfo.BitmarkID, bitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], s.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant])
 		}
 	}
 

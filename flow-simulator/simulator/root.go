@@ -1,7 +1,6 @@
 package simulator
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -99,7 +98,6 @@ func (s *Simulator) Simulate() error {
 		trialAssetIds = append(trialAssetIds, assetIds...)
 	}
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for bitmark to be confirmed
@@ -130,7 +128,6 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	//Ask for acceptance from participants
@@ -144,7 +141,6 @@ func (s *Simulator) Simulate() error {
 		sendToParticipantTxs = append(sendToParticipantTxs, trialTXs...)
 	}
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for transactions to be confirmed
@@ -162,7 +158,6 @@ func (s *Simulator) Simulate() error {
 		medicalBitmarkIDs = append(medicalBitmarkIDs, pp.HoldingConsentTxs...)
 	}
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for bitmarks to be confirmed
@@ -184,7 +179,6 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Accept the medical data and trial from participants
@@ -200,9 +194,6 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
-	fmt.Println("Sleep for wait_time")
-	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
-
 	// Wait for bitmarks to be confirmed
 	trialAndMedicalTxsInArray := make([]string, 0)
 	for k, v := range trialAndMedicalTxs {
@@ -210,6 +201,8 @@ func (s *Simulator) Simulate() error {
 		trialAndMedicalTxsInArray = append(trialAndMedicalTxsInArray, v)
 	}
 	util.WaitForConfirmations(trialAndMedicalTxsInArray, s.conf.Network, s.httpClient)
+
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Evaluate the trial from participants
 	evaluationMatchingServiceOfferIDs := make(map[string]string)
@@ -224,7 +217,6 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Accept receiving from sponsors
@@ -240,7 +232,6 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for transactions to be confirmed
@@ -251,7 +242,6 @@ func (s *Simulator) Simulate() error {
 	}
 	util.WaitForConfirmations(acceptTrialAndMedicalFromSponsorTxsInArray, s.conf.Network, s.httpClient)
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Evaluate from sponsors
@@ -271,7 +261,6 @@ func (s *Simulator) Simulate() error {
 		}
 	}
 
-	fmt.Println("Sleep for wait_time")
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Accept transfer from participants
