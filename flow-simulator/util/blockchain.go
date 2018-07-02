@@ -30,6 +30,9 @@ func isTXConfirmed(tx string, network string, httpClient *http.Client) (bool, er
 	}
 
 	decoder := json.NewDecoder(resp.Body)
+
+	defer resp.Body.Close()
+
 	if err := decoder.Decode(&data); err != nil {
 		return false, err
 	}
