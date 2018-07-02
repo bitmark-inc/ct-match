@@ -195,10 +195,10 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 			medicalTXInfo, err := util.GetTXInfo(medicalTx, network, httpClient)
 
 			// Transfer bitmarks back to previous owner by one signature
-			_, err = util.TryToTransferOneSignature(m.Account, txInfo.BitmarkID, previousOwner, m.apiClient)
-			if err != nil {
-				return nil, err
-			}
+			// _, err = util.TryToTransferOneSignature(m.Account, txInfo.BitmarkID, previousOwner, m.apiClient)
+			// if err != nil {
+			// 	return nil, err
+			// }
 
 			_, err = util.TryToTransferOneSignature(m.Account, medicalTXInfo.BitmarkID, previousOwner, m.apiClient)
 			if err != nil {
