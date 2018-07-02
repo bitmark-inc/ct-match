@@ -1,9 +1,6 @@
 [submodule "flow-simulator/vendor/github.com/bitmark-inc/bitmark-sdk-go"]
 	path = flow-simulator/vendor/github.com/bitmark-inc/bitmark-sdk-go
 	url = https://github.com/bitmark-inc/bitmark-sdk-go
-[submodule "flow-simulator/vendor/github.com/bitmark-inc/pfizer"]
-	path = flow-simulator/vendor/github.com/bitmark-inc/pfizer
-	url = https://github.com/bitmark-inc/pfizer
 [submodule "flow-simulator/vendor/github.com/fatih/color"]
 	path = flow-simulator/vendor/github.com/fatih/color
 	url = https://github.com/fatih/color
