@@ -112,7 +112,7 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, 
 func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Client) (map[string]string, error) {
 	transferOfferIDs := make(map[string]string)
 
-	for _, tx := range p.HoldingConsentTxs {
+	for tx, medicalBitmarkID := range p.issuedMedicalData {
 		txInfo, err := util.GetTXInfo(tx, network, httpClient)
 		if err != nil {
 			return nil, err
@@ -133,7 +133,6 @@ func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Clie
 		}
 
 		// Transfer also the medical data
-		medicalBitmarkID := p.issuedMedicalData[tx]
 		medicalOfferID, err := util.TryToSubmitTransfer(medicalBitmarkID, previousTxInfo.Owner, p.Account, p.apiClient)
 		if err != nil {
 			return nil, err
