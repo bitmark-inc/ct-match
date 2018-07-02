@@ -3,13 +3,8 @@ package util
 import (
 	"time"
 
-	retry "github.com/avast/retry-go"
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"gopkg.in/matryer/try.v1"
-)
-
-var (
-	retryOpts = retry.Delay(10 * time.Second)
 )
 
 func TryToSubmitTransfer(bitmarkid, receiver string, sender *sdk.Account, apiClient *sdk.Client) (string, error) {
