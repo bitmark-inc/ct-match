@@ -105,7 +105,7 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 				return nil, err
 			}
 
-			fmt.Printf("%s signed for acceptance of consent data bitmark %s for trial %s from %s.\n", m.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[trialBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s signed for acceptance of consent data bitmark %s for trial %s from %s.\n", m.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[trialTransferOffer.From])
 
 			// Accept medical offer id
 			medicalTransferOffer, err := m.apiClient.GetTransferOfferById(medicalOfferID)
