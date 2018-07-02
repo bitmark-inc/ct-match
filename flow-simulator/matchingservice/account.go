@@ -151,13 +151,13 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 			continue
 		}
 
+		bitmarkInfo, err := util.GetBitmarkInfo(txInfo.BitmarkID, network, httpClient)
+		if err != nil {
+			return nil, err
+		}
+
 		if util.RandWithProb(m.conf.MatchDataApprovalProb) {
 			// m.print("Accept the matching for tx: " + trialTx)
-
-			bitmarkInfo, err := util.GetBitmarkInfo(txInfo.BitmarkID, network, httpClient)
-			if err != nil {
-				return nil, err
-			}
 
 			// Send bitmark to its asset's registrant
 			trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, bitmarkInfo.Asset.Registrant, m.Account, m.apiClient)
@@ -216,7 +216,7 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 				return nil, err
 			}
 
-			fmt.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, medicalBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
+			fmt.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
 		}
 	}
 
