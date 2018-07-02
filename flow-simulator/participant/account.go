@@ -157,6 +157,10 @@ func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Clie
 func (p *Participant) IssueMedicalDataBitmark(network string, httpClient *http.Client) ([]string, error) {
 	bitmarkIDs := make([]string, 0)
 	for _, tx := range p.HoldingConsentTxs {
+		if !util.RandWithProb(p.conf.SubmitDataProb) {
+			continue
+		}
+
 		txInfo, err := util.GetTXInfo(tx, network, httpClient)
 		if err != nil {
 			return nil, err

@@ -62,13 +62,18 @@ func (m *MatchingService) IssueMoreTrial(assetIDs []string) ([]string, error) {
 func (m *MatchingService) SendTrialToParticipant(participantsList []*participant.Participant, network string, httpClient *http.Client) ([]string, error) {
 	transferOfferIDs := make([]string, 0)
 	for _, issueMoreBitmarkID := range m.issueMoreBitmarkIDs {
-		n := util.RandWithRange(0, len(participantsList)-1)
-		pp := participantsList[n]
-
 		bitmarkInfo, err := util.GetBitmarkInfo(issueMoreBitmarkID, network, httpClient)
 		if err != nil {
 			return nil, err
 		}
+
+		if !util.RandWithProb(m.conf.MatchProb) {
+			fmt.Printf("%s considered P01 for trial %s and found no match.\n", m.Name, bitmarkInfo.Asset.Name)
+			continue
+		}
+
+		n := util.RandWithRange(0, len(participantsList)-1)
+		pp := participantsList[n]
 
 		fmt.Printf("%s considered %s for trial %s and found a match. %s issued consent bitmark %s for trial %s and sent it to %s for acceptance.\n", m.Name, pp.Name, bitmarkInfo.Asset.Name, m.Name, bitmarkInfo.Bitmark.ID, bitmarkInfo.Asset.Name, pp.Name)
 
