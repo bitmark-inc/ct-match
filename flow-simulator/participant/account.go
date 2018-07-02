@@ -89,7 +89,7 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, 
 			case ProcessReceivingTrialBitmarkFromMatchingService:
 				fmt.Printf("%s rejected consent bitmark %s for trial %s from %s.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				fmt.Printf("%s has opted to reject acceptace of consent bitmark %s from %s and refused the invitation to participate in trial %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+				fmt.Printf("%s has opted to reject acceptance of consent bitmark %s from %s and refused the invitation to participate in trial %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
 			}
 		}
 
