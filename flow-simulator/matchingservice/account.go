@@ -31,7 +31,7 @@ func New(name, seed string, client *sdk.Client, conf config.MatchingServiceConf)
 		return nil, err
 	}
 
-	c.Println(tag + "Initialize matching service with bitmark account: " + acc.AccountNumber())
+	// c.Println(tag + "Initialize matching service with bitmark account: " + acc.AccountNumber())
 
 	return &MatchingService{
 		Account:   acc,
