@@ -167,11 +167,11 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 		} else {
 			// s.print("Reject the data for tx: " + trialTx)
 			// Get previous owner
-			previousTxInfo, err := util.GetTXInfo(txInfo.PreviousID, network, httpClient)
-			if err != nil {
-				return nil, err
-			}
-			previousOwner := previousTxInfo.Owner
+			// previousTxInfo, err := util.GetTXInfo(txInfo.PreviousID, network, httpClient)
+			// if err != nil {
+			// 	return nil, err
+			// }
+			// previousOwner := previousTxInfo.Owner
 
 			// Get bitmark id of medical tx
 			medicalTXInfo, err := util.GetTXInfo(medicalTx, network, httpClient)
@@ -185,10 +185,10 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 			}
 
 			// Transfer bitmarks back to previous owner by one signature
-			_, err = util.TryToTransferOneSignature(s.Account, txInfo.BitmarkID, previousOwner, s.apiClient)
-			if err != nil {
-				return nil, err
-			}
+			// _, err = util.TryToTransferOneSignature(s.Account, txInfo.BitmarkID, previousOwner, s.apiClient)
+			// if err != nil {
+			// 	return nil, err
+			// }
 
 			_, err = util.TryToTransferOneSignature(s.Account, medicalTXInfo.BitmarkID, medicalBitmarkInfo.Asset.Registrant, s.apiClient)
 			if err != nil {
