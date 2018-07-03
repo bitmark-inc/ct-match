@@ -68,14 +68,14 @@ func (m *MatchingService) SendTrialToParticipant(participantsList []*participant
 		}
 
 		if !util.RandWithProb(m.conf.MatchProb) {
-			fmt.Printf("%s considered P01 for trial %s and found no match.\n", m.Name, bitmarkInfo.Asset.Name)
+			fmt.Printf("%s considered P01 for %s and found no match.\n", m.Name, bitmarkInfo.Asset.Name)
 			continue
 		}
 
 		n := util.RandWithRange(0, len(participantsList)-1)
 		pp := participantsList[n]
 
-		fmt.Printf("%s considered %s for trial %s and found a match. %s issued consent bitmark %s for trial %s and sent it to %s for acceptance.\n", m.Name, pp.Name, bitmarkInfo.Asset.Name, m.Name, bitmarkInfo.Bitmark.ID, bitmarkInfo.Asset.Name, pp.Name)
+		fmt.Printf("%s considered %s for %s and found a match. %s issued consent bitmark %s for %s and sent it to %s for acceptance.\n", m.Name, pp.Name, bitmarkInfo.Asset.Name, m.Name, bitmarkInfo.Bitmark.ID, bitmarkInfo.Asset.Name, pp.Name)
 
 		offerID, err := util.TryToSubmitTransfer(issueMoreBitmarkID, pp.Account.AccountNumber(), m.Account, m.apiClient)
 
@@ -110,7 +110,7 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 				return nil, err
 			}
 
-			fmt.Printf("%s signed for acceptance of consent data bitmark %s for trial %s from %s.\n", m.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[trialTransferOffer.From])
+			fmt.Printf("%s signed for acceptance of consent data bitmark %s for %s from %s.\n", m.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[trialTransferOffer.From])
 
 			// Accept medical offer id
 			medicalTransferOffer, err := m.apiClient.GetTransferOfferById(medicalOfferID)
@@ -130,7 +130,7 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 
 			txs[trialTxID] = medicalTxID
 
-			fmt.Printf("%s signed for acceptance of health data bitmark %s for trial %s from %s and is evaluating it.\n", m.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s signed for acceptance of health data bitmark %s for %s from %s and is evaluating it.\n", m.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
 
 		}
 
@@ -180,8 +180,8 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 
 			offerIDs[trialOfferID] = medicalOfferID
 
-			fmt.Printf("%s approved health data bitmark %s for trial %s and sent it to %s for evaluation.\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
-			fmt.Printf("%s sent consent bitmark %s for trial %s to %s.\n", m.Name, txInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s approved health data bitmark %s for %s and sent it to %s for evaluation.\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s sent consent bitmark %s for %s to %s.\n", m.Name, txInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
 		} else {
 			// m.print("Reject the matching for tx: " + trialTx)
 			// Get previous owner
@@ -216,7 +216,7 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 				return nil, err
 			}
 
-			fmt.Printf("%s rejected health data bitmark %s for trial %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
+			fmt.Printf("%s rejected health data bitmark %s for %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
 		}
 	}
 
