@@ -1,15 +1,14 @@
 # Pfizer projects
 
-Contains 
-
 ## Pfizer simulator
 ### Prerequisite
 
 - Go 1.9+
 
-### How to build
+### Build
 
 Put the project in `$GOPATH/src/github.com/bitmark-inc/pfizer`
+Change the directory to `flow-simulator` and run:
 ```
 go build
 ```
