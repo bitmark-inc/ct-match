@@ -15,7 +15,7 @@ func TryToSubmitTransfer(bitmarkid, receiver string, sender *sdk.Account, apiCli
 		func(attempt int) (bool, error) {
 			shouldRetry := attempt < 20
 			if attempt >= 1 {
-				log.Println("attemp #", attempt)
+				// log.Println("attemp #", attempt)
 			}
 			// Send bitmark to its asset's registrant
 			transferOffer, err := apiClient.SignTransferOffer(sender, bitmarkid, receiver, true)
@@ -48,7 +48,7 @@ func TryToActionTransfer(transferOffer *sdk.TransferOffer, action string, receiv
 		func(attempt int) (bool, error) {
 			shouldRetry := attempt < 20
 			if attempt >= 1 {
-				log.Println("attemp #", attempt)
+				// log.Println("attemp #", attempt)
 			}
 			counterSign, err := transferOffer.Record.Countersign(receiver)
 			if err != nil {
@@ -78,7 +78,7 @@ func TryToTransferOneSignature(sender *sdk.Account, bitmarkID, receiver string, 
 	err := try.Do(
 		func(attempt int) (bool, error) {
 			if attempt >= 1 {
-				log.Println("attemp #", attempt)
+				// log.Println("attemp #", attempt)
 			}
 			shouldRetry := attempt < 20
 			t, err := apiClient.Transfer(sender, bitmarkID, receiver)

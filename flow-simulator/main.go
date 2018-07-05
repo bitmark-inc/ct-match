@@ -6,7 +6,7 @@ import (
 
 	"github.com/bitmark-inc/pfizer/flow-simulator/config"
 	"github.com/bitmark-inc/pfizer/flow-simulator/simulator"
-	"gopkg.in/urfave/cli.v1"
+	cli "gopkg.in/urfave/cli.v1"
 )
 
 var (
