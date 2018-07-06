@@ -154,7 +154,7 @@ func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Clie
 }
 
 func (p *Participant) IssueMedicalDataBitmark(network string, httpClient *http.Client) ([]string, error) {
-	bitmarkIDs := make([]string, 0)
+	medicalBitmarkIDs := make([]string, 0)
 	for _, tx := range p.HoldingConsentTxs {
 		if !util.RandWithProb(p.conf.SubmitDataProb) {
 			continue
@@ -181,11 +181,12 @@ func (p *Participant) IssueMedicalDataBitmark(network string, httpClient *http.C
 		}
 
 		bitmarkID := bitmarkIDs[0]
+		medicalBitmarkIDs = append(medicalBitmarkIDs, bitmarkID)
 
 		p.issuedMedicalData[tx] = bitmarkID
 	}
 
-	return bitmarkIDs, nil
+	return medicalBitmarkIDs, nil
 }
 
 func (p *Participant) AddTransferOffer(offerId string) {

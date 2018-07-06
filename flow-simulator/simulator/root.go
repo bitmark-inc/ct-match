@@ -101,7 +101,7 @@ func (s *Simulator) Simulate() error {
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for bitmark to be confirmed
-	util.WaitForConfirmations(trialBitmarkIds, s.conf.Network, s.httpClient)
+	util.WaitForBitmarkConfirmations(trialBitmarkIds, s.conf.Network, s.httpClient)
 
 	// Issue more from matching service
 	moreTrialBitmarkIDs := make([]string, 0)
@@ -115,7 +115,7 @@ func (s *Simulator) Simulate() error {
 	}
 
 	// Wait for bitmark to be confirmed
-	util.WaitForConfirmations(moreTrialBitmarkIDs, s.conf.Network, s.httpClient)
+	util.WaitForBitmarkConfirmations(moreTrialBitmarkIDs, s.conf.Network, s.httpClient)
 
 	// Send to participant
 	for _, ms := range matchingServices {
@@ -145,6 +145,7 @@ func (s *Simulator) Simulate() error {
 
 	// Issue medical data from participants that received the trial
 	medicalBitmarkIDs := make([]string, 0)
+	holdingConsentTxs := make([]string, 0)
 	for _, pp := range participants {
 		bitmarkIDs, err := pp.IssueMedicalDataBitmark(s.conf.Network, s.httpClient)
 		if err != nil {
@@ -152,13 +153,14 @@ func (s *Simulator) Simulate() error {
 		}
 
 		medicalBitmarkIDs = append(medicalBitmarkIDs, bitmarkIDs...)
-		medicalBitmarkIDs = append(medicalBitmarkIDs, pp.HoldingConsentTxs...)
+		holdingConsentTxs = append(holdingConsentTxs, pp.HoldingConsentTxs...)
 	}
 
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	// Wait for bitmarks to be confirmed
-	util.WaitForConfirmations(medicalBitmarkIDs, s.conf.Network, s.httpClient)
+	util.WaitForBitmarkConfirmations(medicalBitmarkIDs, s.conf.Network, s.httpClient)
+	util.WaitForConfirmations(holdingConsentTxs, s.conf.Network, s.httpClient)
 
 	// Send back the trial bitmark and medical data to matching service
 	trialAndMedicalOfferIDs := make(map[string]string)

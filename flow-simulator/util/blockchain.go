@@ -103,6 +103,76 @@ func WaitForConfirmations(txs []string, network string, httpClient *http.Client)
 	}
 }
 
+func isBitmarkConfirmed(bitmark string, network string, httpClient *http.Client) (bool, error) {
+	url := apiEndpoint(network) + "/v1/bitmarks/" + bitmark + "?pending=true"
+	resp, err := httpClient.Get(url)
+	if err != nil {
+		return false, err
+	}
+
+	var data struct {
+		Bitmark struct {
+			Status string `json:"status"`
+		} `json:"bitmark"`
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+
+	defer resp.Body.Close()
+
+	if err := decoder.Decode(&data); err != nil {
+		return false, err
+	}
+
+	return data.Bitmark.Status == "confirmed", nil
+}
+
+func isBitmarksConfirmed(bitmarks []string, network string, httpClient *http.Client) bool {
+	var wg sync.WaitGroup
+	isConfirmedChan := make(chan bool, len(bitmarks))
+
+	wg.Add(len(bitmarks))
+	for _, bitmark := range bitmarks {
+		go func(bitmark string) {
+			defer wg.Done()
+			isConfirmed, _ := isBitmarkConfirmed(bitmark, network, httpClient)
+			isConfirmedChan <- isConfirmed
+		}(bitmark)
+	}
+
+	wg.Wait()
+
+	isConfirmed := true
+	for {
+		if len(isConfirmedChan) == 0 {
+			return isConfirmed
+		}
+
+		isConfirmed, ok := <-isConfirmedChan
+		if !ok {
+			return isConfirmed
+		}
+		if isConfirmed == false {
+			close(isConfirmedChan)
+			return false
+		}
+	}
+}
+
+func WaitForBitmarkConfirmations(bitmarks []string, network string, httpClient *http.Client) {
+	fmt.Println("Waiting for bitmarks's confirmations")
+	for {
+		confirmed := isBitmarksConfirmed(bitmarks, network, httpClient)
+
+		if confirmed {
+			fmt.Println("Bitmarks are confirmed")
+			return
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+}
+
 type BitmarkTx struct {
 	ID          string `json:"id"`
 	Owner       string `json:"owner"`
