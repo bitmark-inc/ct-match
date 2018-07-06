@@ -13,6 +13,7 @@ const (
 )
 
 var src = rand.NewSource(time.Now().UnixNano())
+var ran = rand.New(src)
 
 func RandStringBytesMaskImprSrc(n int) string {
 
@@ -34,9 +35,9 @@ func RandStringBytesMaskImprSrc(n int) string {
 }
 
 func RandWithProb(prob float64) bool {
-	return rand.Float64() <= prob
+	return ran.Float64() <= prob
 }
 
 func RandWithRange(min, max int) int {
-	return rand.Intn(max-min) + min
+	return ran.Intn(max-min) + min
 }
