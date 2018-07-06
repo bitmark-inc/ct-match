@@ -21,7 +21,8 @@ type MatchingService struct {
 	apiClient           *sdk.Client
 	Name                string
 	conf                config.MatchingServiceConf
-	issueMoreBitmarkIDs []string
+	Participants        []*participant.Participant
+	issueMoreBitmarkIDs map[string]*participant.Participant
 	Identities          map[string]string
 }
 
@@ -34,49 +35,47 @@ func New(name, seed string, client *sdk.Client, conf config.MatchingServiceConf)
 	// c.Println(tag + "Initialize matching service with bitmark account: " + acc.AccountNumber())
 
 	return &MatchingService{
-		Account:   acc,
-		apiClient: client,
-		conf:      conf,
-		Name:      name,
+		Account:             acc,
+		apiClient:           client,
+		conf:                conf,
+		Name:                name,
+		issueMoreBitmarkIDs: make(map[string]*participant.Participant),
 	}, nil
 }
 
-func (m *MatchingService) IssueMoreTrial(assetIDs []string) ([]string, error) {
-	issueMoreBitmarkIDs := make([]string, 0)
+func (m *MatchingService) IssueMoreTrial(assetIDs []string, network string, httpClient *http.Client) ([]string, error) {
+	totalBitmarkIDs := make([]string, 0)
 	for _, assetID := range assetIDs {
-		if util.RandWithProb(m.conf.SelectAssetProb) {
-			bitmarkIDs, err := m.apiClient.IssueByAssetId(m.Account, assetID, 1)
-			if err != nil {
-				return nil, err
-			}
-
-			issueMoreBitmarkIDs = append(issueMoreBitmarkIDs, bitmarkIDs...)
-			// m.print("Issued more trial bitmark: ", bitmarkIDs[0])
-		}
-	}
-	m.issueMoreBitmarkIDs = issueMoreBitmarkIDs
-
-	return issueMoreBitmarkIDs, nil
-}
-
-func (m *MatchingService) SendTrialToParticipant(participantsList []*participant.Participant, network string, httpClient *http.Client) ([]string, error) {
-	transferOfferIDs := make([]string, 0)
-	for _, issueMoreBitmarkID := range m.issueMoreBitmarkIDs {
-		bitmarkInfo, err := util.GetBitmarkInfo(issueMoreBitmarkID, network, httpClient)
+		assetInfo, err := util.GetAssetInfo(assetID, network, httpClient)
 		if err != nil {
 			return nil, err
 		}
 
-		if !util.RandWithProb(m.conf.MatchProb) {
-			fmt.Printf("%s considered P01 for %s and found no match.\n", m.Name, bitmarkInfo.Asset.Name)
-			continue
+		if util.RandWithProb(m.conf.SelectAssetProb) {
+			for _, p := range m.Participants {
+				if util.RandWithProb(m.conf.MatchProb) {
+					bitmarkIDs, err := m.apiClient.IssueByAssetId(m.Account, assetID, 1)
+					if err != nil {
+						return nil, err
+					}
+
+					bitmarkID := bitmarkIDs[0]
+					totalBitmarkIDs = append(totalBitmarkIDs, bitmarkID)
+					m.issueMoreBitmarkIDs[bitmarkID] = p
+					fmt.Printf("%s considered %s for %s and found a match. %s issued consent bitmark %s for %s and sent it to %s for acceptance.\n", m.Name, p.Name, assetInfo.Name, m.Name, bitmarkID, assetInfo.Name, p.Name)
+				} else {
+					fmt.Printf("%s considered %s for %s and found no match.\n", m.Name, p.Name, assetInfo.Name)
+				}
+			}
 		}
+	}
 
-		n := util.RandWithRange(0, len(participantsList)-1)
-		pp := participantsList[n]
+	return totalBitmarkIDs, nil
+}
 
-		fmt.Printf("%s considered %s for %s and found a match. %s issued consent bitmark %s for %s and sent it to %s for acceptance.\n", m.Name, pp.Name, bitmarkInfo.Asset.Name, m.Name, bitmarkInfo.Bitmark.ID, bitmarkInfo.Asset.Name, pp.Name)
-
+func (m *MatchingService) SendTrialToParticipant(network string, httpClient *http.Client) ([]string, error) {
+	transferOfferIDs := make([]string, 0)
+	for issueMoreBitmarkID, pp := range m.issueMoreBitmarkIDs {
 		offerID, err := util.TryToSubmitTransfer(issueMoreBitmarkID, pp.Account.AccountNumber(), m.Account, m.apiClient)
 
 		if err != nil {

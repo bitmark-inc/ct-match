@@ -241,3 +241,22 @@ func GetBitmarkInfo(bitmarkID string, network string, httpClient *http.Client) (
 
 	return &bitmarkInfo, nil
 }
+
+func GetAssetInfo(assetID string, network string, httpClient *http.Client) (*Asset, error) {
+	assetInfoURL := apiEndpoint(network) + "/v1/assets/" + assetID
+	resp, err := httpClient.Get(assetInfoURL)
+	if err != nil {
+		return nil, err
+	}
+
+	var data struct {
+		Asset Asset `json:"asset"`
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&data); err != nil {
+		return nil, err
+	}
+
+	return &data.Asset, nil
+}

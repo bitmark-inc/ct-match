@@ -42,17 +42,6 @@ func New(conf *config.Configuration) *Simulator {
 func (s *Simulator) Simulate() error {
 	identities := make(map[string]string)
 
-	matchingServices := make([]*matchingservice.MatchingService, 0)
-	for i, seed := range s.conf.MatchingService.Accounts {
-		m, err := matchingservice.New("m"+util.StringFromNum(i+1), seed, s.sdkClient, s.conf.MatchingService)
-		if err != nil {
-			return err
-		}
-
-		identities[m.Account.AccountNumber()] = m.Name
-		matchingServices = append(matchingServices, m)
-	}
-
 	sponsors := make([]*sponsor.Sponsor, 0)
 	for i, seed := range s.conf.Sponsors.Accounts {
 		s, err := sponsor.New("s"+util.StringFromNum(i+1), seed, s.sdkClient, s.conf.Sponsors)
@@ -71,6 +60,19 @@ func (s *Simulator) Simulate() error {
 		}
 		identities[pp.Account.AccountNumber()] = pp.Name
 		participants = append(participants, pp)
+	}
+
+	matchingServices := make([]*matchingservice.MatchingService, 0)
+	for i, seed := range s.conf.MatchingService.Accounts {
+		m, err := matchingservice.New("m"+util.StringFromNum(i+1), seed, s.sdkClient, s.conf.MatchingService)
+		if err != nil {
+			return err
+		}
+
+		m.Participants = participants
+
+		identities[m.Account.AccountNumber()] = m.Name
+		matchingServices = append(matchingServices, m)
 	}
 
 	// Add identities
@@ -106,7 +108,7 @@ func (s *Simulator) Simulate() error {
 	// Issue more from matching service
 	moreTrialBitmarkIDs := make([]string, 0)
 	for _, ms := range matchingServices {
-		bitmarkIDs, err := ms.IssueMoreTrial(trialAssetIds)
+		bitmarkIDs, err := ms.IssueMoreTrial(trialAssetIds, s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}
@@ -119,7 +121,7 @@ func (s *Simulator) Simulate() error {
 
 	// Send to participant
 	for _, ms := range matchingServices {
-		_, err := ms.SendTrialToParticipant(participants, s.conf.Network, s.httpClient)
+		_, err := ms.SendTrialToParticipant(s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}
