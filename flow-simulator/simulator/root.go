@@ -103,9 +103,6 @@ func (s *Simulator) Simulate() error {
 	// Wait for bitmark to be confirmed
 	util.WaitForConfirmations(trialBitmarkIds, s.conf.Network, s.httpClient)
 
-	// Workaround, sleep for 10s
-	time.Sleep(10 * time.Second)
-
 	// Issue more from matching service
 	moreTrialBitmarkIDs := make([]string, 0)
 	for _, ms := range matchingServices {
@@ -162,9 +159,6 @@ func (s *Simulator) Simulate() error {
 
 	// Wait for bitmarks to be confirmed
 	util.WaitForConfirmations(medicalBitmarkIDs, s.conf.Network, s.httpClient)
-
-	// Workaround, sleep for 30s
-	time.Sleep(30 * time.Second)
 
 	// Send back the trial bitmark and medical data to matching service
 	trialAndMedicalOfferIDs := make(map[string]string)
