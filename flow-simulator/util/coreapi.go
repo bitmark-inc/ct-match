@@ -21,14 +21,14 @@ func TryToSubmitTransfer(bitmarkid, receiver string, sender *sdk.Account, apiCli
 			transferOffer, err := apiClient.SignTransferOffer(sender, bitmarkid, receiver, true)
 			if err != nil {
 				time.Sleep(10 * time.Second)
-				log.Println(err)
+				log.Println("TryToSubmitTransfer", err, bitmarkid, receiver)
 				return shouldRetry, err
 			}
 
 			oid, err := apiClient.SubmitTransferOffer(sender, transferOffer, nil)
 			if err != nil {
 				time.Sleep(10 * time.Second)
-				log.Println(err)
+				log.Println("TryToSubmitTransfer", err, bitmarkid, receiver)
 				return shouldRetry, err
 			}
 			offerID = oid
@@ -53,14 +53,14 @@ func TryToActionTransfer(transferOffer *sdk.TransferOffer, action string, receiv
 			counterSign, err := transferOffer.Record.Countersign(receiver)
 			if err != nil {
 				time.Sleep(10 * time.Second)
-				log.Println(err)
+				log.Println("TryToActionTransfer", err, transferOffer.Id, action)
 				return shouldRetry, err
 			}
 
 			t, err := apiClient.CompleteTransferOffer(receiver, transferOffer.Id, action, counterSign.Countersignature)
 			if err != nil {
 				time.Sleep(10 * time.Second)
-				log.Println(err)
+				log.Println("TryToActionTransfer", err, transferOffer.Id, action)
 				return shouldRetry, err
 			}
 
@@ -84,7 +84,7 @@ func TryToTransferOneSignature(sender *sdk.Account, bitmarkID, receiver string, 
 			t, err := apiClient.Transfer(sender, bitmarkID, receiver)
 			if err != nil {
 				time.Sleep(10 * time.Second)
-				log.Println(err)
+				log.Println("TryToTransferOneSignature", err, bitmarkID)
 				return shouldRetry, err
 			}
 			// log.Println("success transfer with one signature:", tx, bitmarkID, receiver)
