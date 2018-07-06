@@ -42,30 +42,34 @@ func isTXConfirmed(tx string, network string, httpClient *http.Client) (bool, er
 
 func isTXsConfirmed(txs []string, network string, httpClient *http.Client) bool {
 	var wg sync.WaitGroup
-	isConfirmedChan := make(chan bool)
+	isConfirmedChan := make(chan bool, len(txs))
 
 	wg.Add(len(txs))
 	for _, tx := range txs {
 		go func(tx string) {
 			defer wg.Done()
-
 			isConfirmed, _ := isTXConfirmed(tx, network, httpClient)
 			isConfirmedChan <- isConfirmed
 		}(tx)
 	}
 
-	isConfirmed := true
-	go func() {
-		for i := range isConfirmedChan {
-			if i == false {
-				isConfirmed = false
-			}
-		}
-	}()
-
 	wg.Wait()
 
-	return isConfirmed
+	isConfirmed := true
+	for {
+		if len(isConfirmedChan) == 0 {
+			return isConfirmed
+		}
+
+		isConfirmed, ok := <-isConfirmedChan
+		if !ok {
+			return isConfirmed
+		}
+		if isConfirmed == false {
+			close(isConfirmedChan)
+			return false
+		}
+	}
 }
 
 func WaitForConfirmation(tx string, network string, httpClient *http.Client) error {
