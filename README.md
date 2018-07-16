@@ -46,12 +46,13 @@ mkdir -p $GOPATH/src/github.com/bitmark-inc/pfizer
 
 Change to that directory and checkout the source code:
 ```
-cd $GOPATH/src/github.com/bitmark-inc/pfizer
-git checkout git@github.com:bitmark-inc/pfizer.git
+cd $GOPATH/src/github.com/bitmark-inc
+git clone git@github.com:bitmark-inc/pfizer.git
 ```
 
 Change the directory to `flow-simulator` and build the project:
 ```
+cd $GOPATH/src/github.com/bitmark-inc/pfizer/flow-simulator
 go build
 ```
 
