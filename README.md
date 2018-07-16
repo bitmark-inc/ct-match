@@ -44,13 +44,13 @@ Create directory for pfizer project:
 mkdir -p $GOPATH/src/github.com/bitmark-inc/pfizer
 ```
 
-Copy your source code into that directory:
+Change to that directory and checkout the source code:
 ```
-cp (your source code directory) $GOPATH/src/github.com/bitmark-inc/pfizer
+cd $GOPATH/src/github.com/bitmark-inc/pfizer
+git checkout git@github.com:bitmark-inc/pfizer.git
 ```
 
-Put the project in `$GOPATH/src/github.com/bitmark-inc/pfizer`
-Change the directory to `flow-simulator` and run:
+Change the directory to `flow-simulator` and build the project:
 ```
 go build
 ```
