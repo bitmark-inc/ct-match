@@ -34,7 +34,7 @@ export GOPATH=$HOME/.go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 ```
 
-*For Linux or MacOS without using Brew:*
+*For Linux, Windows or MacOS without using Brew:*
 Please referece this guide: https://github.com/golang/go/wiki/SettingGOPATH
 
 ### Build
