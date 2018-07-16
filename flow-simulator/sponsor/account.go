@@ -17,6 +17,7 @@ var (
 
 type Sponsor struct {
 	Account    *sdk.Account
+	index      int
 	Name       string
 	apiClient  *sdk.Client
 	conf       config.SponsorsConf
@@ -27,7 +28,7 @@ func (s *Sponsor) print(a ...interface{}) {
 	c.Println("["+s.Name+"] ", a)
 }
 
-func New(name, seed string, client *sdk.Client, conf config.SponsorsConf) (*Sponsor, error) {
+func New(index int, seed string, client *sdk.Client, conf config.SponsorsConf) (*Sponsor, error) {
 	acc, err := sdk.AccountFromSeed(seed)
 	if err != nil {
 		return nil, err
@@ -36,8 +37,9 @@ func New(name, seed string, client *sdk.Client, conf config.SponsorsConf) (*Spon
 	return &Sponsor{
 		Account:   acc,
 		apiClient: client,
-		Name:      name,
+		Name:      "Sponsor " + util.StringFromNum(index),
 		conf:      conf,
+		index:     index,
 	}, nil
 }
 
@@ -52,7 +54,7 @@ func (s *Sponsor) RegisterNewTrial() ([]string, []string, error) {
 	trialAssetIds := make([]string, 0)
 
 	for i := 0; i < numberOfTrials; i++ {
-		assetName := "trial_" + s.Name + "_t" + util.StringFromNum(i)
+		assetName := "trial_" + util.StringFromNum(s.index) + "_t" + util.StringFromNum(i)
 		trialContent := "TRIAL #" + strconv.Itoa(i) + "\n" + util.RandStringBytesMaskImprSrc(2000)
 		af := sdk.NewAssetFile("asset_"+s.Name+"_t"+util.StringFromNum(i), []byte(trialContent), sdk.Public)
 		bitmarkIDs, err := s.apiClient.IssueByAssetFile(s.Account, af, 1, &sdk.AssetInfo{
@@ -115,8 +117,8 @@ func (s *Sponsor) AcceptTrialBackAndMedicalData(offerIDs map[string]string, netw
 				return nil, err
 			}
 
-			fmt.Printf("%s signed for acceptance of health data bitmark %s for %s from %s for %s and is evaluating it.\n", s.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, s.Identities[trialTransferOffer.From], s.Identities[medicalBitmarkInfo.Asset.Registrant])
-			fmt.Printf("%s signed for acceptance of consent bitmark %s for %s from %s.\n", s.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, s.Identities[trialBitmarkInfo.Bitmark.Issuer])
+			fmt.Printf("%s signed for acceptance of health data bitmark for %s from %s for %s and is evaluating it.\n", s.Name, trialBitmarkInfo.Asset.Name, s.Identities[trialTransferOffer.From], s.Identities[medicalBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s signed for acceptance of consent bitmark for %s from %s.\n", s.Name, trialBitmarkInfo.Asset.Name, s.Identities[trialBitmarkInfo.Bitmark.Issuer])
 		}
 
 	}
@@ -163,7 +165,7 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 
 			offerIDs[trialOfferID] = participantAccount
 
-			fmt.Printf("%s approved health data bitmark %s for %s from %s for acceptance into %s and sent consent bitmark %s to %s for acceptance into %s.\n", s.Name, medicalTXInfo.BitmarkID, bitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], bitmarkInfo.Asset.Name, bitmarkInfo.Bitmark.ID, s.Identities[participantAccount], bitmarkInfo.Asset.Name)
+			fmt.Printf("%s approved health data bitmark for %s from %s for acceptance into %s and sent consent bitmark to %s for acceptance into %s.\n", s.Name, bitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], bitmarkInfo.Asset.Name, s.Identities[participantAccount], bitmarkInfo.Asset.Name)
 		} else {
 			// s.print("Reject the data for tx: " + trialTx)
 			// Get previous owner
@@ -195,7 +197,7 @@ func (s *Sponsor) EvaluateTrialFromSponsor(txs map[string]string, network string
 				return nil, err
 			}
 
-			fmt.Printf("%s rejected health data bitmark %s for %s from %s. %s has sent the rejected health data bitmark back to %s.\n", s.Name, medicalTXInfo.BitmarkID, bitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], s.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s rejected health data bitmark for %s from %s. %s has sent the rejected health data bitmark back to %s.\n", s.Name, bitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], s.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant])
 		}
 	}
 

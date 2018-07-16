@@ -31,7 +31,7 @@ type Participant struct {
 	issuedMedicalData    map[string]string // Map between a consent tx and a bitmark id of medical data
 }
 
-func New(name string, client *sdk.Client, conf config.ParticipantsConf) (*Participant, error) {
+func New(client *sdk.Client, conf config.ParticipantsConf) (*Participant, error) {
 	acc, err := client.CreateAccount()
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func New(name string, client *sdk.Client, conf config.ParticipantsConf) (*Partic
 	return &Participant{
 		Account:              acc,
 		apiClient:            client,
-		Name:                 name,
+		Name:                 "Participant " + util.ShortenAccountNumber(acc.AccountNumber()),
 		conf:                 conf,
 		waitingTransferOffer: make([]string, 0),
 		issuedMedicalData:    make(map[string]string),
@@ -78,18 +78,18 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, 
 
 			switch fromcase {
 			case ProcessReceivingTrialBitmarkFromMatchingService:
-				fmt.Printf("%s accepted consent bitmark %s for %s from %s and is considering participation.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
+				fmt.Printf("%s accepted consent bitmark for %s from %s and is considering participation.\n", p.Name, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				fmt.Printf("%s signed for acceptance of consent bitmark %s from %s and has been successfully entered as a participant in %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+				fmt.Printf("%s signed for acceptance of consent bitmark from %s and has been successfully entered as a participant in %s.\n", p.Name, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
 			}
 		} else {
 			action = "reject"
 
 			switch fromcase {
 			case ProcessReceivingTrialBitmarkFromMatchingService:
-				fmt.Printf("%s rejected consent bitmark %s for %s from %s.\n", p.Name, transferOffer.BitmarkId, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
+				fmt.Printf("%s rejected consent bitmark for %s from %s.\n", p.Name, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				fmt.Printf("%s has opted to reject acceptance of consent bitmark %s from %s and refused the invitation to participate in %s.\n", p.Name, transferOffer.BitmarkId, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+				fmt.Printf("%s has opted to reject acceptance of consent bitmark from %s and refused the invitation to participate in %s.\n", p.Name, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
 			}
 		}
 
@@ -148,7 +148,7 @@ func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Clie
 
 		identityForReceiver := p.Identities[previousTxInfo.Owner]
 
-		fmt.Printf("%s issued health data bitmark %s for %s and sent it to %s for evaluation along with consent bitmark %s.\n", p.Name, medicalBitmarkID, bitmarkInfo.Asset.Name, identityForReceiver, txInfo.BitmarkID)
+		fmt.Printf("%s issued health data bitmark for %s and sent it to %s for evaluation along with consent bitmark.\n", p.Name, bitmarkInfo.Asset.Name, identityForReceiver)
 	}
 	return transferOfferIDs, nil
 }

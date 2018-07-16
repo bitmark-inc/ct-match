@@ -62,7 +62,7 @@ func (m *MatchingService) IssueMoreTrial(assetIDs []string, network string, http
 					bitmarkID := bitmarkIDs[0]
 					totalBitmarkIDs = append(totalBitmarkIDs, bitmarkID)
 					m.issueMoreBitmarkIDs[bitmarkID] = p
-					fmt.Printf("%s considered %s for %s and found a match. %s issued consent bitmark %s for %s and sent it to %s for acceptance.\n", m.Name, p.Name, assetInfo.Name, m.Name, bitmarkID, assetInfo.Name, p.Name)
+					fmt.Printf("%s considered %s for %s and found a match. %s issued consent bitmark for %s and sent it to %s for acceptance.\n", m.Name, p.Name, assetInfo.Name, m.Name, assetInfo.Name, p.Name)
 				} else {
 					fmt.Printf("%s considered %s for %s and found no match.\n", m.Name, p.Name, assetInfo.Name)
 				}
@@ -109,7 +109,7 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 				return nil, err
 			}
 
-			fmt.Printf("%s signed for acceptance of consent data bitmark %s for %s from %s.\n", m.Name, trialTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[trialTransferOffer.From])
+			fmt.Printf("%s signed for acceptance of consent data bitmark for %s from %s.\n", m.Name, trialBitmarkInfo.Asset.Name, m.Identities[trialTransferOffer.From])
 
 			// Accept medical offer id
 			medicalTransferOffer, err := m.apiClient.GetTransferOfferById(medicalOfferID)
@@ -129,7 +129,7 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData(offerIDs map[string]stri
 
 			txs[trialTxID] = medicalTxID
 
-			fmt.Printf("%s signed for acceptance of health data bitmark %s for %s from %s and is evaluating it.\n", m.Name, medicalTransferOffer.BitmarkId, trialBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s signed for acceptance of health data bitmark for %s from %s and is evaluating it.\n", m.Name, trialBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
 
 		}
 
@@ -179,8 +179,8 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 
 			offerIDs[trialOfferID] = medicalOfferID
 
-			fmt.Printf("%s approved health data bitmark %s for %s and sent it to %s for evaluation.\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
-			fmt.Printf("%s sent consent bitmark %s for %s to %s.\n", m.Name, txInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s approved health data bitmark for %s and sent it to %s for evaluation.\n", m.Name, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
+			fmt.Printf("%s sent consent bitmark for %s to %s.\n", m.Name, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
 		} else {
 			// m.print("Reject the matching for tx: " + trialTx)
 			// Get previous owner
@@ -215,7 +215,7 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 				return nil, err
 			}
 
-			fmt.Printf("%s rejected health data bitmark %s for %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
+			fmt.Printf("%s rejected health data bitmark for %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, bitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
 		}
 	}
 

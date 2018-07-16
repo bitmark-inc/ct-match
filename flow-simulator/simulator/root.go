@@ -44,7 +44,7 @@ func (s *Simulator) Simulate() error {
 
 	sponsors := make([]*sponsor.Sponsor, 0)
 	for i, seed := range s.conf.Sponsors.Accounts {
-		s, err := sponsor.New("s"+util.StringFromNum(i+1), seed, s.sdkClient, s.conf.Sponsors)
+		s, err := sponsor.New(i+1, seed, s.sdkClient, s.conf.Sponsors)
 		if err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func (s *Simulator) Simulate() error {
 
 	participants := make([]*participant.Participant, 0)
 	for i := 0; i < s.conf.Participants.ParticipantNum; i++ {
-		pp, err := participant.New("p"+util.StringFromNum(i+1), s.sdkClient, s.conf.Participants)
+		pp, err := participant.New(s.sdkClient, s.conf.Participants)
 		if err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func (s *Simulator) Simulate() error {
 
 	matchingServices := make([]*matchingservice.MatchingService, 0)
 	for i, seed := range s.conf.MatchingService.Accounts {
-		m, err := matchingservice.New("m"+util.StringFromNum(i+1), seed, s.sdkClient, s.conf.MatchingService)
+		m, err := matchingservice.New("Matching Service "+util.StringFromNum(i+1), seed, s.sdkClient, s.conf.MatchingService)
 		if err != nil {
 			return err
 		}
