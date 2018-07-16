@@ -41,19 +41,28 @@ Please referece this guide: https://github.com/golang/go/wiki/SettingGOPATH
 
 Create directory for pfizer project:
 ```
-mkdir -p $GOPATH/src/github.com/bitmark-inc/pfizer
+$ mkdir -p $GOPATH/src/github.com/bitmark-inc/pfizer
 ```
 
-Change to that directory and checkout the source code:
+Change to that directory
 ```
-cd $GOPATH/src/github.com/bitmark-inc
-git clone git@github.com:bitmark-inc/pfizer.git
+$ cd $GOPATH/src/github.com/bitmark-inc
+```
+
+Checkout source code via ssh:
+```
+$ git clone git@github.com:bitmark-inc/pfizer.git
+```
+
+Or you can checkout source code via git https:
+```
+$ git clone https://github.com/bitmark-inc/pfizer.git
 ```
 
 Change the directory to `flow-simulator` and build the project:
 ```
-cd $GOPATH/src/github.com/bitmark-inc/pfizer/flow-simulator
-go build
+$ cd $GOPATH/src/github.com/bitmark-inc/pfizer/flow-simulator
+$ go build
 ```
 
 ### Configuration
