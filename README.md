@@ -7,8 +7,9 @@
 
 ### How to install Go?
 
-#### Setup Go Using Brew
+#### Install
 
+*For MacOS, using Brew:*
 ```
 $ brew install go
 ```
@@ -18,8 +19,13 @@ If you have Go installed, you can use this command to update Go to latest versio
 $ brew upgrade go
 ```
 
+*For Linux or MacOS without using Brew:*
+Please referece this guide: https://golang.org/doc/install#install
+
 #### Set Path for Go
-If all process finish, just add PATH to your .bashrc or .zshrc if you are using ohmyzsh :
+*For MacOS, using Brew:*
+
+Add PATH to your .bashrc or .zshrc if you are using ohmyzsh :
 ```
 # .zshrc
 # go
@@ -28,7 +34,20 @@ export GOPATH=$HOME/.go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 ```
 
+*For Linux or MacOS without using Brew:*
+Please referece this guide: https://github.com/golang/go/wiki/SettingGOPATH
+
 ### Build
+
+Create directory for pfizer project:
+```
+mkdir -p $GOPATH/src/github.com/bitmark-inc/pfizer
+```
+
+Copy your source code into that directory:
+```
+cp (your source code directory) $GOPATH/src/github.com/bitmark-inc/pfizer
+```
 
 Put the project in `$GOPATH/src/github.com/bitmark-inc/pfizer`
 Change the directory to `flow-simulator` and run:
