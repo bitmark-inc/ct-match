@@ -63,5 +63,5 @@ Please use the testnet config file `/flow-simulator/testnet.conf` for your setti
 ### Run
 
 ```
-$ flow-simulator -c testnet.conf
+$ ./flow-simulator -c testnet.conf
 ```
