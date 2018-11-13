@@ -23,7 +23,9 @@ type Service struct {
 }
 
 func (s *Service) newAPIRequest(method, path string, body io.Reader) (*http.Request, error) {
-	return http.NewRequest(method, s.apiEndpoint+path, body)
+	r, err := http.NewRequest(method, s.apiEndpoint+path, body)
+	r.Header.Set("api-token", "megRePtONitAfTyrIlch")
+	return r, err
 }
 
 func (s *Service) newSignedAPIRequest(method, path string, body io.Reader, acct *Account, parts ...string) (*http.Request, error) {
@@ -167,7 +169,7 @@ func (s *Service) createIssueTx(asset *AssetRecord, issues []*IssueRecord) ([]st
 		b["assets"] = []*AssetRecord{asset}
 	}
 	body := toJSONRequestBody(b)
-	req, _ := s.newAPIRequest("POST", "/v3/issue", body)
+	req, _ := s.newAPIRequest("POST", "/v4/issue", body)
 
 	result := make([]transaction, 0)
 	if _, err := s.submitRequest(req, &result); err != nil {

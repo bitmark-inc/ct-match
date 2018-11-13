@@ -207,37 +207,37 @@ func (c *Client) Transfer(acct *Account, bitmarkId, receiver string) (string, er
 }
 
 func (c *Client) SignTransferOffer(sender *Account, bitmarkId, receiver string, includeBitmark bool) (*TransferOfferRecord, error) {
-	access, aerr := c.service.getAssetAccess(sender, bitmarkId)
-	if aerr != nil {
-		return nil, aerr
-	}
+	// access, aerr := c.service.getAssetAccess(sender, bitmarkId)
+	// if aerr != nil {
+	// 	return nil, aerr
+	// }
 
-	if access.SessData != nil {
-		senderPublicKey, err := c.service.getEncPubkey(access.Sender)
-		if err != nil {
-			return nil, err
-		}
+	// if access.SessData != nil {
+	// 	senderPublicKey, err := c.service.getEncPubkey(access.Sender)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-		dataKey, err := dataKeyFromSessionData(sender, access.SessData, senderPublicKey)
-		if err != nil {
-			return nil, err
-		}
+	// 	dataKey, err := dataKeyFromSessionData(sender, access.SessData, senderPublicKey)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-		recipientEncrPubkey, err := c.service.getEncPubkey(receiver)
-		if err != nil {
-			return nil, err
-		}
+	// 	recipientEncrPubkey, err := c.service.getEncPubkey(receiver)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-		data, err := createSessionData(sender, dataKey, recipientEncrPubkey)
-		if err != nil {
-			return nil, err
-		}
+	// 	data, err := createSessionData(sender, dataKey, recipientEncrPubkey)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-		err = c.service.addSessionData(sender, bitmarkId, receiver, data)
-		if err != nil {
-			return nil, err
-		}
-	}
+	// 	err = c.service.addSessionData(sender, bitmarkId, receiver, data)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	bmk, err := c.service.getBitmark(bitmarkId)
 	if err != nil {

@@ -42,6 +42,7 @@ func newAPIRequest(method, url string, body io.Reader) (*APIRequest, error) {
 	if err != nil {
 		return nil, err
 	}
+	r.Header.Set("api-token", "megRePtONitAfTyrIlch")
 	return &APIRequest{r}, nil
 }
 
