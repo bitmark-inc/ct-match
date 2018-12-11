@@ -41,3 +41,8 @@ func RandWithProb(prob float64) bool {
 func RandWithRange(min, max int) int {
 	return ran.Intn(max-min) + min
 }
+
+func RandInPool(pool []string) string {
+	index := RandWithRange(0, len(pool)-1)
+	return pool[index]
+}

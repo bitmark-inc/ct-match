@@ -3,7 +3,6 @@ package sponsor
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/pfizer/flow-simulator/config"
@@ -54,8 +53,8 @@ func (s *Sponsor) RegisterNewTrial() ([]string, []string, error) {
 	trialAssetIds := make([]string, 0)
 
 	for i := 0; i < numberOfTrials; i++ {
-		assetName := "trial_" + util.StringFromNum(s.index) + "_t" + util.StringFromNum(i)
-		trialContent := "TRIAL #" + strconv.Itoa(i) + "\n" + util.RandStringBytesMaskImprSrc(2000)
+		assetName := util.RandInPool(s.conf.StudiesPool)
+		trialContent := assetName + "\n\n" + util.RandStringBytesMaskImprSrc(2000)
 		af := sdk.NewAssetFile("asset_"+s.Name+"_t"+util.StringFromNum(i), []byte(trialContent), sdk.Public)
 		bitmarkIDs, err := s.apiClient.IssueByAssetFile(s.Account, af, 1, &sdk.AssetInfo{
 			Name: assetName,

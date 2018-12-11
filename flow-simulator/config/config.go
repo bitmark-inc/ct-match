@@ -26,6 +26,7 @@ type SponsorsConf struct {
 	DataApprovalProb   float64   `hcl:"sponsor_data_approval_prob"`
 	TrialPerSponsorMin int       `hcl:"trials_per_sponsor_min"`
 	TrialPerSponsorMax int       `hcl:"trials_per_sponsor_max"`
+	StudiesPool        []string  `hcl:"studies_pool"`
 }
 
 type ParticipantsConf struct {
