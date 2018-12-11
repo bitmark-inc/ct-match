@@ -9,18 +9,23 @@ import (
 
 // Configuration is the main configuration structure
 
+type Account struct {
+	Identity string `hcl:"identity"`
+	Seed     string `hcl:"seed"`
+}
+
 type MatchingServiceConf struct {
-	Accounts              []string `hcl:"accounts"`
-	SelectAssetProb       float64  `hcl:"select_asset_prob"`
-	MatchProb             float64  `hcl:"match_prob"`
-	MatchDataApprovalProb float64  `hcl:"match_data_approval_prob"`
+	Accounts              []Account `hcl:"accounts"`
+	SelectAssetProb       float64   `hcl:"select_asset_prob"`
+	MatchProb             float64   `hcl:"match_prob"`
+	MatchDataApprovalProb float64   `hcl:"match_data_approval_prob"`
 }
 
 type SponsorsConf struct {
-	Accounts           []string `hcl:"accounts"`
-	DataApprovalProb   float64  `hcl:"sponsor_data_approval_prob"`
-	TrialPerSponsorMin int      `hcl:"trials_per_sponsor_min"`
-	TrialPerSponsorMax int      `hcl:"trials_per_sponsor_max"`
+	Accounts           []Account `hcl:"accounts"`
+	DataApprovalProb   float64   `hcl:"sponsor_data_approval_prob"`
+	TrialPerSponsorMin int       `hcl:"trials_per_sponsor_min"`
+	TrialPerSponsorMax int       `hcl:"trials_per_sponsor_max"`
 }
 
 type ParticipantsConf struct {

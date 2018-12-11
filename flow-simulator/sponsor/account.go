@@ -28,7 +28,7 @@ func (s *Sponsor) print(a ...interface{}) {
 	c.Println("["+s.Name+"] ", a)
 }
 
-func New(index int, seed string, client *sdk.Client, conf config.SponsorsConf) (*Sponsor, error) {
+func New(index int, name, seed string, client *sdk.Client, conf config.SponsorsConf) (*Sponsor, error) {
 	acc, err := sdk.AccountFromSeed(seed)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func New(index int, seed string, client *sdk.Client, conf config.SponsorsConf) (
 	return &Sponsor{
 		Account:   acc,
 		apiClient: client,
-		Name:      "Sponsor " + util.StringFromNum(index),
+		Name:      name,
 		conf:      conf,
 		index:     index,
 	}, nil
