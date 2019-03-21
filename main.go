@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/bitmark-inc/pfizer/config"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -17,7 +16,7 @@ func main() {
 	app.Name = "simulator"
 	app.Usage = "to simulate the flow for matching service"
 	app.Action = func(c *cli.Context) error {
-		conf, err := config.Load(configFile)
+		conf, err := loadConfig(configFile)
 		if err != nil {
 			return err
 		}

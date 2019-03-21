@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
-	"github.com/bitmark-inc/pfizer/config"
 	"github.com/bitmark-inc/pfizer/util"
 )
 
@@ -15,7 +14,7 @@ type Sponsor struct {
 	index      int
 	Name       string
 	apiClient  *sdk.Client
-	conf       config.SponsorsConf
+	conf       SponsorsConf
 	Identities map[string]string
 }
 
@@ -23,7 +22,7 @@ func (s *Sponsor) print(a ...interface{}) {
 	log.Println("["+s.Name+"] ", a)
 }
 
-func newSponsor(index int, name, seed string, client *sdk.Client, conf config.SponsorsConf) (*Sponsor, error) {
+func newSponsor(index int, name, seed string, client *sdk.Client, conf SponsorsConf) (*Sponsor, error) {
 	acc, err := sdk.AccountFromSeed(seed)
 	if err != nil {
 		return nil, err

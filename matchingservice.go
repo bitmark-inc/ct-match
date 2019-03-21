@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
-	"github.com/bitmark-inc/pfizer/config"
 	"github.com/bitmark-inc/pfizer/util"
 )
 
@@ -14,13 +13,13 @@ type MatchingService struct {
 	Account             *sdk.Account
 	apiClient           *sdk.Client
 	Name                string
-	conf                config.MatchingServiceConf
+	conf                MatchingServiceConf
 	Participants        []*Participant
 	issueMoreBitmarkIDs map[string]*Participant
 	Identities          map[string]string
 }
 
-func newMatchingService(name, seed string, client *sdk.Client, conf config.MatchingServiceConf) (*MatchingService, error) {
+func newMatchingService(name, seed string, client *sdk.Client, conf MatchingServiceConf) (*MatchingService, error) {
 	acc, err := sdk.AccountFromSeed(seed)
 	if err != nil {
 		return nil, err

@@ -5,12 +5,11 @@ import (
 	"time"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
-	"github.com/bitmark-inc/pfizer/config"
 	"github.com/bitmark-inc/pfizer/util"
 )
 
 type Simulator struct {
-	conf       *config.Configuration
+	conf       *Configuration
 	sdkClient  *sdk.Client
 	httpClient *http.Client
 
@@ -19,7 +18,7 @@ type Simulator struct {
 	sponsors         []*Sponsor
 }
 
-func newSimulator(conf *config.Configuration) *Simulator {
+func newSimulator(conf *Configuration) *Simulator {
 	httpClient := &http.Client{
 		Timeout: 20 * time.Second,
 	}

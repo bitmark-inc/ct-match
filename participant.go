@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
-	"github.com/bitmark-inc/pfizer/config"
 	"github.com/bitmark-inc/pfizer/util"
 )
 
@@ -19,14 +18,14 @@ type Participant struct {
 	Account              *sdk.Account
 	apiClient            *sdk.Client
 	Name                 string
-	conf                 config.ParticipantsConf
+	conf                 ParticipantsConf
 	Identities           map[string]string
 	waitingTransferOffer []string
 	HoldingConsentTxs    []string
 	issuedMedicalData    map[string]string // Map between a consent tx and a bitmark id of medical data
 }
 
-func newParticipant(client *sdk.Client, conf config.ParticipantsConf) (*Participant, error) {
+func newParticipant(client *sdk.Client, conf ParticipantsConf) (*Participant, error) {
 	acc, err := client.CreateAccount()
 	if err != nil {
 		return nil, err

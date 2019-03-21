@@ -1,4 +1,4 @@
-package config
+package main
 
 import (
 	"io/ioutil"
@@ -44,8 +44,8 @@ type Configuration struct {
 	Participants    ParticipantsConf    `hcl:"participants"`
 }
 
-// Load will read configuration from file
-func Load(fileName string) (*Configuration, error) {
+// loadConfig will read configuration from file
+func loadConfig(fileName string) (*Configuration, error) {
 	var m Configuration
 	f, err := os.Open(fileName)
 	if err != nil {
