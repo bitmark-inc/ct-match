@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/bitmark-inc/pfizer/config"
-	"github.com/bitmark-inc/pfizer/simulator"
 	cli "gopkg.in/urfave/cli.v1"
 )
 
@@ -22,7 +21,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-		s := simulator.New(conf)
+		s := newSimulator(conf)
 		return s.Simulate()
 	}
 

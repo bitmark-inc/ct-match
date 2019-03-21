@@ -1,18 +1,13 @@
-package participant
+package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/pfizer/config"
 	"github.com/bitmark-inc/pfizer/util"
-	"github.com/fatih/color"
-)
-
-var (
-	c   = color.New(color.FgRed)
-	tag = "[PARTICIPANT] "
 )
 
 const (
@@ -31,13 +26,11 @@ type Participant struct {
 	issuedMedicalData    map[string]string // Map between a consent tx and a bitmark id of medical data
 }
 
-func New(client *sdk.Client, conf config.ParticipantsConf) (*Participant, error) {
+func newParticipant(client *sdk.Client, conf config.ParticipantsConf) (*Participant, error) {
 	acc, err := client.CreateAccount()
 	if err != nil {
 		return nil, err
 	}
-
-	// c.Println(tag + "Initialize participant with bitmark account: " + acc.AccountNumber())
 
 	return &Participant{
 		Account:              acc,
@@ -194,5 +187,5 @@ func (p *Participant) AddTransferOffer(offerId string) {
 }
 
 func (p *Participant) print(a ...interface{}) {
-	c.Println("["+p.Name+"] ", a)
+	log.Println("["+p.Name+"] ", a)
 }

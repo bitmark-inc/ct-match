@@ -1,19 +1,13 @@
-package matchingservice
+package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/pfizer/config"
-	"github.com/bitmark-inc/pfizer/participant"
 	"github.com/bitmark-inc/pfizer/util"
-	"github.com/fatih/color"
-)
-
-var (
-	c   = color.New(color.FgBlue)
-	tag = "[MATCHING_SERVICE] "
 )
 
 type MatchingService struct {
@@ -21,25 +15,25 @@ type MatchingService struct {
 	apiClient           *sdk.Client
 	Name                string
 	conf                config.MatchingServiceConf
-	Participants        []*participant.Participant
-	issueMoreBitmarkIDs map[string]*participant.Participant
+	Participants        []*Participant
+	issueMoreBitmarkIDs map[string]*Participant
 	Identities          map[string]string
 }
 
-func New(name, seed string, client *sdk.Client, conf config.MatchingServiceConf) (*MatchingService, error) {
+func newMatchingService(name, seed string, client *sdk.Client, conf config.MatchingServiceConf) (*MatchingService, error) {
 	acc, err := sdk.AccountFromSeed(seed)
 	if err != nil {
 		return nil, err
 	}
 
-	// c.Println(tag + "Initialize matching service with bitmark account: " + acc.AccountNumber())
+	// log.Println(tag + "Initialize matching service with bitmark account: " + acc.AccountNumber())
 
 	return &MatchingService{
 		Account:             acc,
 		apiClient:           client,
 		conf:                conf,
 		Name:                name,
-		issueMoreBitmarkIDs: make(map[string]*participant.Participant),
+		issueMoreBitmarkIDs: make(map[string]*Participant),
 	}, nil
 }
 
@@ -223,5 +217,5 @@ func (m *MatchingService) EvaluateTrialFromParticipant(txs map[string]string, ne
 }
 
 func (m *MatchingService) print(a ...interface{}) {
-	c.Println("["+m.Name+"] ", a)
+	log.Println("["+m.Name+"] ", a)
 }

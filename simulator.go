@@ -1,4 +1,4 @@
-package simulator
+package main
 
 import (
 	"net/http"
@@ -7,10 +7,6 @@ import (
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/pfizer/config"
 	"github.com/bitmark-inc/pfizer/util"
-
-	"github.com/bitmark-inc/pfizer/matchingservice"
-	"github.com/bitmark-inc/pfizer/participant"
-	"github.com/bitmark-inc/pfizer/sponsor"
 )
 
 type Simulator struct {
@@ -18,12 +14,12 @@ type Simulator struct {
 	sdkClient  *sdk.Client
 	httpClient *http.Client
 
-	matchingServices []*matchingservice.MatchingService
-	participants     []*participant.Participant
-	sponsors         []*sponsor.Sponsor
+	matchingServices []*MatchingService
+	participants     []*Participant
+	sponsors         []*Sponsor
 }
 
-func New(conf *config.Configuration) *Simulator {
+func newSimulator(conf *config.Configuration) *Simulator {
 	httpClient := &http.Client{
 		Timeout: 20 * time.Second,
 	}
@@ -42,9 +38,9 @@ func New(conf *config.Configuration) *Simulator {
 func (s *Simulator) Simulate() error {
 	identities := make(map[string]string)
 
-	sponsors := make([]*sponsor.Sponsor, 0)
+	sponsors := make([]*Sponsor, 0)
 	for i, account := range s.conf.Sponsors.Accounts {
-		s, err := sponsor.New(i, account.Identity, account.Seed, s.sdkClient, s.conf.Sponsors)
+		s, err := newSponsor(i, account.Identity, account.Seed, s.sdkClient, s.conf.Sponsors)
 		if err != nil {
 			return err
 		}
@@ -52,9 +48,9 @@ func (s *Simulator) Simulate() error {
 		sponsors = append(sponsors, s)
 	}
 
-	participants := make([]*participant.Participant, 0)
+	participants := make([]*Participant, 0)
 	for i := 0; i < s.conf.Participants.ParticipantNum; i++ {
-		pp, err := participant.New(s.sdkClient, s.conf.Participants)
+		pp, err := newParticipant(s.sdkClient, s.conf.Participants)
 		if err != nil {
 			return err
 		}
@@ -62,9 +58,9 @@ func (s *Simulator) Simulate() error {
 		participants = append(participants, pp)
 	}
 
-	matchingServices := make([]*matchingservice.MatchingService, 0)
+	matchingServices := make([]*MatchingService, 0)
 	for _, account := range s.conf.MatchingService.Accounts {
-		m, err := matchingservice.New(account.Identity, account.Seed, s.sdkClient, s.conf.MatchingService)
+		m, err := newMatchingService(account.Identity, account.Seed, s.sdkClient, s.conf.MatchingService)
 		if err != nil {
 			return err
 		}
@@ -132,7 +128,7 @@ func (s *Simulator) Simulate() error {
 	//Ask for acceptance from participants
 	sendToParticipantTxs := make([]string, 0)
 	for _, pp := range participants {
-		trialTXs, err := pp.ProcessRecevingTrialBitmark(participant.ProcessReceivingTrialBitmarkFromMatchingService, s.conf.Network, s.httpClient)
+		trialTXs, err := pp.ProcessRecevingTrialBitmark(ProcessReceivingTrialBitmarkFromMatchingService, s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}
@@ -264,7 +260,7 @@ func (s *Simulator) Simulate() error {
 	// Accept transfer from participants
 	sendFromSponsorToParticipantTxs := make([]string, 0)
 	for _, pp := range participants {
-		trialTXs, err := pp.ProcessRecevingTrialBitmark(participant.ProcessReceivingTrialBitmarkFromSponsor, s.conf.Network, s.httpClient)
+		trialTXs, err := pp.ProcessRecevingTrialBitmark(ProcessReceivingTrialBitmarkFromSponsor, s.conf.Network, s.httpClient)
 		if err != nil {
 			return err
 		}

@@ -1,17 +1,13 @@
-package sponsor
+package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
 	"github.com/bitmark-inc/pfizer/config"
 	"github.com/bitmark-inc/pfizer/util"
-	"github.com/fatih/color"
-)
-
-var (
-	c = color.New(color.FgYellow)
 )
 
 type Sponsor struct {
@@ -24,10 +20,10 @@ type Sponsor struct {
 }
 
 func (s *Sponsor) print(a ...interface{}) {
-	c.Println("["+s.Name+"] ", a)
+	log.Println("["+s.Name+"] ", a)
 }
 
-func New(index int, name, seed string, client *sdk.Client, conf config.SponsorsConf) (*Sponsor, error) {
+func newSponsor(index int, name, seed string, client *sdk.Client, conf config.SponsorsConf) (*Sponsor, error) {
 	acc, err := sdk.AccountFromSeed(seed)
 	if err != nil {
 		return nil, err
