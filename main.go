@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/bitmark-inc/pfizer/flow-simulator/config"
-	"github.com/bitmark-inc/pfizer/flow-simulator/simulator"
+	"github.com/bitmark-inc/pfizer/config"
+	"github.com/bitmark-inc/pfizer/simulator"
 	cli "gopkg.in/urfave/cli.v1"
 )
 

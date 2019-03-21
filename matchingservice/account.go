@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
-	"github.com/bitmark-inc/pfizer/flow-simulator/config"
-	"github.com/bitmark-inc/pfizer/flow-simulator/participant"
-	"github.com/bitmark-inc/pfizer/flow-simulator/util"
+	"github.com/bitmark-inc/pfizer/config"
+	"github.com/bitmark-inc/pfizer/participant"
+	"github.com/bitmark-inc/pfizer/util"
 	"github.com/fatih/color"
 )
 

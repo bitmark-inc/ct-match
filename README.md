@@ -61,7 +61,7 @@ $ git clone https://github.com/bitmark-inc/pfizer.git
 
 Change the directory to `flow-simulator` and build the project:
 ``` bash
-$ cd $GOPATH/src/github.com/bitmark-inc/pfizer/flow-simulator
+$ cd $GOPATH/src/github.com/bitmark-inc/pfizer
 $ go build
 ```
 
