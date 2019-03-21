@@ -7,11 +7,11 @@
   name = "github.com/bitmark-inc/bitmark-sdk-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "dc9a713f9a35a6cf288eece35b9c329809be1ee5"
+  revision = "45498fbf631b05813ea3bc1466f9392e2e66f36d"
 
 [[projects]]
   branch = "master"
-  digest = "1:12247a2e99a060cc692f6680e5272c8adf0b8f572e6bce0d7095e624c958a240"
+  digest = "1:01c267930c063d047b1044d6b2bff0ad967faf37ba639a3eec16a013a16d5f3d"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
@@ -25,11 +25,11 @@
     "json/token",
   ]
   pruneopts = "UT"
-  revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
+  revision = "65a6292f0157eff210d03ed1bf6c59b190b8b906"
 
 [[projects]]
   branch = "master"
-  digest = "1:19602469d1d9613fb1b72eb69937403569a868d6fa7c441259a7dc3cb0bb7801"
+  digest = "1:7fa20d941bd8ccbe7e78fe230de07efe51f5f8bc9486d3bcc318d0190261946b"
   name = "golang.org/x/crypto"
   packages = [
     "chacha20poly1305",
@@ -45,15 +45,18 @@
     "sha3",
   ]
   pruneopts = "UT"
-  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
+  revision = "b7391e95e576cacdcdd422573063bc057239113d"
 
 [[projects]]
   branch = "master"
-  digest = "1:8392490b249a3602a13813be12324d3b16eca044ae185ff32cdd9e267706e208"
+  digest = "1:d3229d0c4f5a29399fe3d39cd64de216af15f8bce9a00932c0a7a5ddaa6418f7"
   name = "golang.org/x/sys"
-  packages = ["cpu"]
+  packages = [
+    "cpu",
+    "unix",
+  ]
   pruneopts = "UT"
-  revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
+  revision = "6c81ef8f67ca3f42fc9cd71dfbd5f35b0c4b5771"
 
 [[projects]]
   digest = "1:cc9f0c72e45707522afc156b3d715443e2021acedff165a4803f72a0d2ed170f"
