@@ -3,18 +3,15 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:2ea8805b19861c4b0e3bd02e8d5f18e3178ed0e21b6904b3df6e26f986c6bf39"
   name = "github.com/bitmark-inc/bitmark-sdk-go"
   packages = ["."]
+  pruneopts = "UT"
   revision = "dc9a713f9a35a6cf288eece35b9c329809be1ee5"
 
 [[projects]]
-  name = "github.com/fatih/color"
-  packages = ["."]
-  revision = "5b77d2a35fb0ede96d138fc9a99f5c9b6aef11b4"
-  version = "v1.7.0"
-
-[[projects]]
   branch = "master"
+  digest = "1:12247a2e99a060cc692f6680e5272c8adf0b8f572e6bce0d7095e624c958a240"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
@@ -25,24 +22,14 @@
     "hcl/token",
     "json/parser",
     "json/scanner",
-    "json/token"
+    "json/token",
   ]
+  pruneopts = "UT"
   revision = "ef8a98b0bbce4a65b5aa4c368430a80ddc533168"
 
 [[projects]]
-  name = "github.com/mattn/go-colorable"
-  packages = ["."]
-  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
-  version = "v0.0.9"
-
-[[projects]]
-  name = "github.com/mattn/go-isatty"
-  packages = ["."]
-  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
-  version = "v0.0.3"
-
-[[projects]]
   branch = "master"
+  digest = "1:19602469d1d9613fb1b72eb69937403569a868d6fa7c441259a7dc3cb0bb7801"
   name = "golang.org/x/crypto"
   packages = [
     "chacha20poly1305",
@@ -55,34 +42,43 @@
     "nacl/secretbox",
     "poly1305",
     "salsa20/salsa",
-    "sha3"
+    "sha3",
   ]
+  pruneopts = "UT"
   revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
 
 [[projects]]
   branch = "master"
+  digest = "1:8392490b249a3602a13813be12324d3b16eca044ae185ff32cdd9e267706e208"
   name = "golang.org/x/sys"
-  packages = [
-    "cpu",
-    "unix"
-  ]
+  packages = ["cpu"]
+  pruneopts = "UT"
   revision = "1b2967e3c290b7c545b3db0deeda16e9be4f98a2"
 
 [[projects]]
+  digest = "1:cc9f0c72e45707522afc156b3d715443e2021acedff165a4803f72a0d2ed170f"
   name = "gopkg.in/matryer/try.v1"
   packages = ["."]
+  pruneopts = "UT"
   revision = "312d2599e12e89ca89b52a09597394f449235d80"
   version = "v1"
 
 [[projects]]
+  digest = "1:b24d38b282bacf9791408a080f606370efa3d364e4b5fd9ba0f7b87786d3b679"
   name = "gopkg.in/urfave/cli.v1"
   packages = ["."]
+  pruneopts = "UT"
   revision = "cfb38830724cc34fedffe9a2a29fb54fa9169cd1"
   version = "v1.20.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a5e8ebfa72a753a99db9c0c7a0b8b0f27fa03dd2b2db54c20d0ec7e8cce8f5ff"
+  input-imports = [
+    "github.com/bitmark-inc/bitmark-sdk-go",
+    "github.com/hashicorp/hcl",
+    "gopkg.in/matryer/try.v1",
+    "gopkg.in/urfave/cli.v1",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

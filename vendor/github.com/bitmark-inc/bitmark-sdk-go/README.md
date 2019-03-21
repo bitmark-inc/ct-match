@@ -1,1 +1,0 @@
-# bitmark-sdk-go
