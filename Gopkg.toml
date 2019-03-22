@@ -26,20 +26,12 @@
 
 
 [[constraint]]
-  branch = "master"
+  branch = "v2"
   name = "github.com/bitmark-inc/bitmark-sdk-go"
-
-[[constraint]]
-  name = "github.com/fatih/color"
-  version = "1.7.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/hashicorp/hcl"
-
-[[constraint]]
-  name = "gopkg.in/matryer/try.v1"
-  version = "1.0.0"
 
 [[constraint]]
   name = "gopkg.in/urfave/cli.v1"

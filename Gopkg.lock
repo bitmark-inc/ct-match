@@ -2,12 +2,48 @@
 
 
 [[projects]]
-  branch = "master"
-  digest = "1:2ea8805b19861c4b0e3bd02e8d5f18e3178ed0e21b6904b3df6e26f986c6bf39"
+  branch = "v2"
+  digest = "1:3f9c9bd7b0427196644f1021f7a23e4b9aa317da1f374dbcc06d6d653108dacf"
   name = "github.com/bitmark-inc/bitmark-sdk-go"
+  packages = [
+    ".",
+    "account",
+    "account/bip39",
+    "asset",
+    "bitmark",
+    "encoding",
+    "tx",
+    "utils",
+  ]
+  pruneopts = "UT"
+  revision = "6831c5700b0f763f5dc5640fa779c07bfc8dd264"
+
+[[projects]]
+  digest = "1:d9879ef2056dff4cff5dd6643b6187228007c93d41a210770c7eee7ddecf5d3c"
+  name = "github.com/bitmark-inc/bitmarkd"
+  packages = [
+    "fault",
+    "util",
+  ]
+  pruneopts = "UT"
+  revision = "7126fc67889ec7f9d3c51708af8785ccd6186bb9"
+  version = "v8.5"
+
+[[projects]]
+  digest = "1:3e61978061ed95f56d06bc7b2968447d8cab2f978f64257ec7c42649cb2a8371"
+  name = "github.com/bitmark-inc/logger"
   packages = ["."]
   pruneopts = "UT"
-  revision = "45498fbf631b05813ea3bc1466f9392e2e66f36d"
+  revision = "eb5137b300614377139ac6bf610d75a8ccb74432"
+  version = "v3.4"
+
+[[projects]]
+  digest = "1:50e893a85575fa48dc4982a279e50e2fd8b74e4f7c587860c1e25c77083b8125"
+  name = "github.com/cihub/seelog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d2c6e5aa9fbfdd1c624e140287063c7730654115"
+  version = "v2.6"
 
 [[projects]]
   branch = "master"
@@ -29,14 +65,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7fa20d941bd8ccbe7e78fe230de07efe51f5f8bc9486d3bcc318d0190261946b"
+  digest = "1:d9b48a117a540fd760fc4b7ebf66fd2c1bbdf05919990293bbcdcfcff63ec2eb"
   name = "golang.org/x/crypto"
   packages = [
-    "chacha20poly1305",
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
-    "internal/chacha20",
     "internal/subtle",
     "nacl/box",
     "nacl/secretbox",
@@ -56,15 +90,20 @@
     "unix",
   ]
   pruneopts = "UT"
-  revision = "6c81ef8f67ca3f42fc9cd71dfbd5f35b0c4b5771"
+  revision = "f7bb7a8bee54210937e93ec56d007d892c1f0580"
 
 [[projects]]
-  digest = "1:cc9f0c72e45707522afc156b3d715443e2021acedff165a4803f72a0d2ed170f"
-  name = "gopkg.in/matryer/try.v1"
-  packages = ["."]
+  digest = "1:17ad89bd57485e11f306d41b703f53089fb0803682707b21fe9b3b29467d37a0"
+  name = "golang.org/x/text"
+  packages = [
+    "internal/gen",
+    "internal/tag",
+    "language",
+    "unicode/cldr",
+  ]
   pruneopts = "UT"
-  revision = "312d2599e12e89ca89b52a09597394f449235d80"
-  version = "v1"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
 
 [[projects]]
   digest = "1:b24d38b282bacf9791408a080f606370efa3d364e4b5fd9ba0f7b87786d3b679"
@@ -79,8 +118,11 @@
   analyzer-version = 1
   input-imports = [
     "github.com/bitmark-inc/bitmark-sdk-go",
+    "github.com/bitmark-inc/bitmark-sdk-go/account",
+    "github.com/bitmark-inc/bitmark-sdk-go/asset",
+    "github.com/bitmark-inc/bitmark-sdk-go/bitmark",
+    "github.com/bitmark-inc/bitmark-sdk-go/tx",
     "github.com/hashicorp/hcl",
-    "gopkg.in/matryer/try.v1",
     "gopkg.in/urfave/cli.v1",
   ]
   solver-name = "gps-cdcl"

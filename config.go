@@ -19,6 +19,7 @@ type MatchingServiceConf struct {
 	SelectAssetProb       float64   `hcl:"select_asset_prob"`
 	MatchProb             float64   `hcl:"match_prob"`
 	MatchDataApprovalProb float64   `hcl:"match_data_approval_prob"`
+	TrashBinAccount       string    `hcl:"trashBinAccount"`
 }
 
 type SponsorsConf struct {
@@ -38,6 +39,7 @@ type ParticipantsConf struct {
 
 type Configuration struct {
 	Network         string              `hcl:"network"`
+	APIToken        string              `hcl:"api_token"`
 	WaitTime        int                 `hcl:"wait_time"`
 	MatchingService MatchingServiceConf `hcl:"matchingService"`
 	Sponsors        SponsorsConf        `hcl:"sponsors"`

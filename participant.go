@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 
-	sdk "github.com/bitmark-inc/bitmark-sdk-go"
+	"github.com/bitmark-inc/bitmark-sdk-go/account"
+	"github.com/bitmark-inc/bitmark-sdk-go/asset"
+	"github.com/bitmark-inc/bitmark-sdk-go/bitmark"
 	"github.com/bitmark-inc/pfizer/util"
 )
 
@@ -15,35 +16,31 @@ const (
 )
 
 type Participant struct {
-	Account              *sdk.Account
-	apiClient            *sdk.Client
-	Name                 string
-	conf                 ParticipantsConf
-	Identities           map[string]string
-	waitingTransferOffer []string
-	HoldingConsentTxs    []string
-	issuedMedicalData    map[string]string // Map between a consent tx and a bitmark id of medical data
+	Account                  account.Account
+	Name                     string
+	conf                     ParticipantsConf
+	Identities               map[string]string
+	HoldingConsentBitmarkIDs []string
+	IssuedMedicalData        map[string]string // Map between a consent tx and a bitmark id of medical data
 }
 
-func newParticipant(client *sdk.Client, conf ParticipantsConf) (*Participant, error) {
-	acc, err := client.CreateAccount()
+func newParticipant(conf ParticipantsConf) (*Participant, error) {
+	acc, err := account.New()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Participant{
-		Account:              acc,
-		apiClient:            client,
-		Name:                 "Participant " + util.ShortenAccountNumber(acc.AccountNumber()),
-		conf:                 conf,
-		waitingTransferOffer: make([]string, 0),
-		issuedMedicalData:    make(map[string]string),
+		Account:           acc,
+		Name:              "Participant " + util.ShortenAccountNumber(acc.AccountNumber()),
+		conf:              conf,
+		IssuedMedicalData: make(map[string]string),
 	}, nil
 }
 
-func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, httpClient *http.Client) ([]string, error) {
+func (p *Participant) ProcessRecevingTrialBitmark(fromcase int) ([]string, error) {
 	// p.print("Participant has " + strconv.Itoa(len(p.waitingTransferOffer)) + " transfer requests")
-	txIDs := make([]string, 0)
+	bitmarkIDs := make([]string, 0)
 	var prob float64
 	switch fromcase {
 	case ProcessReceivingTrialBitmarkFromMatchingService:
@@ -51,140 +48,138 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int, network string, 
 	case ProcessReceivingTrialBitmarkFromSponsor:
 		prob = p.conf.AcceptMatchProb
 	}
-	for _, offerID := range p.waitingTransferOffer {
-		isAccepted := util.RandWithProb(prob)
 
-		transferOffer, err := p.apiClient.GetTransferOfferById(offerID)
-		if err != nil {
-			return nil, err
-		}
+	builder := bitmark.NewQueryParamsBuilder().
+		OfferTo(p.Account.AccountNumber()).
+		LoadAsset(true)
 
-		bitmarkInfo, err := util.GetBitmarkInfo(transferOffer.BitmarkId, network, httpClient)
-		if err != nil {
-			return nil, err
-		}
+	bitmarks, err := bitmark.List(builder)
+	if err != nil {
+		return nil, err
+	}
 
-		var action string
-		if isAccepted {
-			action = "accept"
+	for _, b := range bitmarks {
+		willAccept := util.RandWithProb(prob)
+
+		if willAccept {
+			offerResponseParam := bitmark.NewTransferResponseParams(b, bitmark.Accept)
+			offerResponseParam.Sign(p.Account)
+			if err := bitmark.Respond(offerResponseParam); err != nil {
+				return nil, err
+			}
 
 			switch fromcase {
 			case ProcessReceivingTrialBitmarkFromMatchingService:
-				fmt.Printf("%s accepted consent bitmark for %s from %s and is considering participation.\n", p.Name, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
+				fmt.Printf("%s accepted consent bitmark for %s from %s and is considering participation.\n", p.Name, b.Asset.Name, p.Identities[b.Offer.From])
+				bitmarkIDs = append(bitmarkIDs, b.Id)
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				fmt.Printf("%s signed for acceptance of consent bitmark from %s and has been successfully entered as a participant in %s.\n", p.Name, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+				fmt.Printf("%s signed for acceptance of consent bitmark from %s and has been successfully entered as a participant in %s.\n", p.Name, p.Identities[b.Offer.From], b.Asset.Name)
 			}
 		} else {
-			action = "reject"
+			offerResponseParam := bitmark.NewTransferResponseParams(b, bitmark.Reject)
+			offerResponseParam.Sign(p.Account)
+			if err := bitmark.Respond(offerResponseParam); err != nil {
+				return nil, err
+			}
 
 			switch fromcase {
 			case ProcessReceivingTrialBitmarkFromMatchingService:
-				fmt.Printf("%s rejected consent bitmark for %s from %s.\n", p.Name, bitmarkInfo.Asset.Name, p.Identities[transferOffer.From])
+				fmt.Printf("%s rejected consent bitmark for %s from %s.\n", p.Name, b.Asset.Name, p.Identities[b.Offer.From])
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				fmt.Printf("%s has opted to reject acceptance of consent bitmark from %s and refused the invitation to participate in %s.\n", p.Name, p.Identities[transferOffer.From], bitmarkInfo.Asset.Name)
+				fmt.Printf("%s has opted to reject acceptance of consent bitmark from %s and refused the invitation to participate in %s.\n", p.Name, p.Identities[b.Offer.From], b.Asset.Name)
 			}
 		}
-
-		txID, err := util.TryToActionTransfer(transferOffer, action, p.Account, p.apiClient)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(txID) > 0 {
-			txIDs = append(txIDs, txID)
-		}
 	}
 
-	p.HoldingConsentTxs = txIDs
-	p.waitingTransferOffer = make([]string, 0) // Wipe out the waiting list
+	p.HoldingConsentBitmarkIDs = bitmarkIDs
 
-	return txIDs, nil
+	return bitmarkIDs, nil
 }
 
-func (p *Participant) SendBackTrialBitmark(network string, httpClient *http.Client) (map[string]string, error) {
-	transferOfferIDs := make(map[string]string)
-
-	for tx, medicalBitmarkID := range p.issuedMedicalData {
-		txInfo, err := util.GetTXInfo(tx, network, httpClient)
+func (p *Participant) SendBackTrialBitmark() error {
+	for consentBitmarkID, medicalBitmarkID := range p.IssuedMedicalData {
+		consentBitmarkInfo, err := bitmark.Get(consentBitmarkID, true)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		if txInfo.Owner != p.Account.AccountNumber() {
-			continue
+		matchingServiceAccountNumber := consentBitmarkInfo.Issuer
+
+		// Transfer medical bitmark
+		log.Println("Transfer medical bitmark: ", medicalBitmarkID)
+		medicalOfferParam := bitmark.NewOfferParams(matchingServiceAccountNumber, nil)
+		medicalOfferParam.FromBitmark(medicalBitmarkID)
+		medicalOfferParam.Sign(p.Account)
+		if err := bitmark.Offer(medicalOfferParam); err != nil {
+			return err
 		}
 
-		previousTxInfo, err := util.GetTXInfo(txInfo.PreviousID, network, httpClient)
-		if err != nil {
-			return nil, err
+		// Also transfer the consent bitmark
+		consentOfferParam := bitmark.NewOfferParams(matchingServiceAccountNumber, nil)
+		consentOfferParam.FromBitmark(consentBitmarkID)
+		consentOfferParam.Sign(p.Account)
+		if err := bitmark.Offer(consentOfferParam); err != nil {
+			return err
 		}
-
-		trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, previousTxInfo.Owner, p.Account, p.apiClient)
-		if err != nil {
-			return nil, err
-		}
-
-		// Transfer also the medical data
-		medicalOfferID, err := util.TryToSubmitTransfer(medicalBitmarkID, previousTxInfo.Owner, p.Account, p.apiClient)
-		if err != nil {
-			return nil, err
-		}
-
-		transferOfferIDs[trialOfferID] = medicalOfferID
 
 		// Get bitmark info of trial
-		bitmarkInfo, err := util.GetBitmarkInfo(txInfo.BitmarkID, network, httpClient)
+		medicalBitmarkInfo, err := bitmark.Get(medicalBitmarkID, true)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		identityForReceiver := p.Identities[previousTxInfo.Owner]
+		identityForReceiver := p.Identities[matchingServiceAccountNumber]
 
-		fmt.Printf("%s issued health data bitmark for %s and sent it to %s for evaluation along with consent bitmark.\n", p.Name, bitmarkInfo.Asset.Name, identityForReceiver)
+		fmt.Printf("%s issued health data bitmark for %s and sent it to %s for evaluation along with consent bitmark.\n", p.Name, medicalBitmarkInfo.Asset.Name, identityForReceiver)
 	}
-	return transferOfferIDs, nil
+	return nil
 }
 
-func (p *Participant) IssueMedicalDataBitmark(network string, httpClient *http.Client) ([]string, error) {
+func (p *Participant) IssueMedicalDataBitmark() ([]string, error) {
 	medicalBitmarkIDs := make([]string, 0)
-	for _, tx := range p.HoldingConsentTxs {
+	for _, consentBitmarkID := range p.HoldingConsentBitmarkIDs {
 		if !util.RandWithProb(p.conf.SubmitDataProb) {
 			continue
 		}
 
-		txInfo, err := util.GetTXInfo(tx, network, httpClient)
-		if err != nil {
-			return nil, err
-		}
-
-		bitmarkInfo, err := util.GetBitmarkInfo(txInfo.BitmarkID, network, httpClient)
+		consentBitmarkInfo, err := bitmark.Get(consentBitmarkID, true)
 		if err != nil {
 			return nil, err
 		}
 
 		medicalContent := "MEDICAL DATA\n" + util.RandStringBytesMaskImprSrc(1000)
-		af := sdk.NewAssetFile("medical_data.txt", []byte(medicalContent), sdk.Private)
-		bitmarkIDs, err := p.apiClient.IssueByAssetFile(p.Account, af, 1, &sdk.AssetInfo{
-			Name: "health_data_" + p.Name + "_" + p.Identities[bitmarkInfo.Asset.Registrant],
-		})
 
+		assetParam, err := asset.NewRegistrationParams(
+			"health_data_"+p.Name+"_"+p.Identities[consentBitmarkInfo.Asset.Registrant],
+			map[string]string{
+				"Type":          "Health Data",
+				"Trial Bitmark": consentBitmarkID,
+			},
+		)
+
+		assetParam.SetFingerprint([]byte(medicalContent))
+		assetParam.Sign(p.Account)
+		assetID, err := asset.Register(assetParam)
 		if err != nil {
 			return nil, err
 		}
 
+		issueParam := bitmark.NewIssuanceParams(
+			assetID,
+			1,
+		)
+		issueParam.Sign(p.Account)
+		bitmarkIDs, err := bitmark.Issue(issueParam)
+
 		bitmarkID := bitmarkIDs[0]
 		medicalBitmarkIDs = append(medicalBitmarkIDs, bitmarkID)
 
-		p.issuedMedicalData[tx] = bitmarkID
+		p.IssuedMedicalData[consentBitmarkID] = bitmarkID
 	}
 
 	return medicalBitmarkIDs, nil
 }
 
-func (p *Participant) AddTransferOffer(offerId string) {
-	p.waitingTransferOffer = append(p.waitingTransferOffer, offerId)
-}
-
 func (p *Participant) print(a ...interface{}) {
-	log.Println("["+p.Name+"] ", a)
+	fmt.Println("["+p.Name+"] ", a)
 }
