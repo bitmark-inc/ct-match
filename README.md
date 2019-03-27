@@ -4,6 +4,7 @@
 ### Prerequisite
 
 - Go 1.9+
+- Go dep (https://golang.github.io/dep/)
 
 ### How to install Go?
 
@@ -34,8 +35,23 @@ export GOPATH=$HOME/.go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 ```
 
-*For Linux, Windows or MacOS without using Brew:*
-Please referece this guide: https://github.com/golang/go/wiki/SettingGOPATH
+#### Install dependencies
+*For MacOS, using Brew:*
+
+``` bash
+$ brew install dep
+$ brew upgrade dep
+```
+
+*For Linux
+``` bash
+sudo apt-get install go-dep
+```
+
+On project folder, enter this command:
+``` bash
+dep ensure
+```
 
 ### Build
 
@@ -59,7 +75,7 @@ Or you can checkout source code via git https:
 $ git clone https://github.com/bitmark-inc/pfizer.git
 ```
 
-Change the directory to `flow-simulator` and build the project:
+Build the project:
 ``` bash
 $ cd $GOPATH/src/github.com/bitmark-inc/pfizer
 $ go build
@@ -67,22 +83,38 @@ $ go build
 
 ### Configuration
 
-Please use the testnet config file `/flow-simulator/testnet.conf` for your settings.
+Please use the testnet config file `testnet.conf` for your settings.
 
 Sample config file:
 ```hcl
 network = "testnet" # bitmark network to run
 
+api_token = "" # Bitmark SDK's API token (see https://sdk-docs.bitmark.com)
+
 wait_time = 10 # waiting time for each step (for demo)
 
 matchingService {
     accounts = [
-        "5XEECtvPGJ84ogn76W5BoPCpqL3TG3zUcScMpvH2zTUu8xeMrXvGUgW",
-        "5XEECsk7VkpvHqPdGH4664P9q3sXkLAJEdSUCFq2FBVKn97B3GPPS7V",
-        "5XEECsUkdJ7rt9eo2AAGN9qx6pQZ1hi5Hs5pB6mZ5VBwoZmtKbu3Lpp",
-        "5XEECsADuedFjWk7HzHSyJx7xF4NXKp7DY2pedJ8DyMefpg6BTDP5D3",
-        "5XEECtF9sMSc6gN5Agu7qsUsif1uu3PvjWQN9wvoncJnY3KFt7HASk3",
-        "5XEECtLc3AakrabW1PvjoZD92sro6AnSXMG95D5Fa7dwJuDowgFY8WC"
+        {
+            identity = "Matching Service 1",
+            seed = "9J87CqSvmk7doU5XkpwjnaT7NM85Py6pD"
+        },
+        {
+            identity = "Matching Service 2",
+            seed = "9J876x77doS1kJZp4dAMHvXP22KwXouct"
+        },
+         {
+             identity = "Matching Service 3",
+             seed = "9J874rk23TJGiLv7Kf6uJoBGZt5DwDCBY"
+         },
+         {
+             identity = "Matching Service 4",
+             seed = "9J87B7PKvHccJggdvNuMuNDzoBdB4yqpg"
+         },
+        {
+            identity = "Matching Service 5",
+            seed = "9J873bK5yFWvAZgoKtWcvR2LbETJDyua8"
+        }
     ] # pre-defined accounts for matching services
     select_asset_prob = 0.3 # probability of selecting assets from sponsors to issue more and send to participants 
     match_prob = 0.4 # probability of selecting a participant for a specific trial
@@ -91,14 +123,67 @@ matchingService {
 
 sponsors {
     accounts = [
-        "5XEECsftWZMHs1qzpvHxhE1PPYd4eNcXLTfS5M72d1ePehSmEj142HL",
-        "5XEECsQJdzzzvR9xSGt52389jQDU8V2ikGmoMqjuEZmYYTStUFHBHzg",
-        "5XEECtqNr1daLUVKoCssP5bRmceR5CBmWKTA4SstgCQ7bYQwGiUSBXm",
-        "5XEECtZAJKaUBrpXkaap8CdJedy4Sr6XfvahLtNj4rZd2MqqRzTbbnj"
+        {
+            identity = "Stanford University",
+            seed = "9J87E888gSWzSE5bo6Pw62aNH8X52Y799"
+        },
+        {
+            identity = "University of California",
+            seed = "9J878GN96ArWWdqjDmqruPMsA8o1VRtht"
+        },
+        {
+            identity = "Noah Merin Los Angeles",
+            seed = "9J875vioxDXnZ43ft4qisUS3PebucqjDo"
+        },
+         {
+             identity = "WCCT Cypress",
+             seed = "9J878sSgsFW1RMaT18N5bfF2JZ5GzTAwK"
+         },
+        {
+            identity = "Stanford Cancer Institute",
+            seed = "9J874S1M2kv5PEwaUX7aQYTor4LXYEk8L"
+        },
+        {
+            identity = "ProSciento Inc.",
+            seed = "9J87CNq39EfHFUfRZ8xPvBAYm6YSvVAVw"
+        },
+        {
+            identity = "Cedars Sinai Los Angeles",
+            seed = "9J877CfjEp1pJBfL7CrQBzSfbBCHeh1YW"
+        },
+        {
+            identity = "Adam Schickedanz",
+            seed = "9J87ESXqsYm4Upr8GvjirckxHJdiGJAEp"
+        },{
+            identity = "UCSF School of Dentistry",
+            seed = "9J876GhEZE5v6FLYLcKwNjhZwGSDkHUWB"
+        }
     ] # pre-defined accounts for sponsors
     sponsor_data_approval_prob = 0.7 # probability of approving trials which is sent from matching services after evaluation
     trials_per_sponsor_min = 2 # minimum number of trials to issue for each sponsor
     trials_per_sponsor_max = 3 # maximum number of trials to issue for each sponsor
+    studies_pool = [
+        "Bisphenol A and Muscle Insulin Sensitivity",
+        "Gas Exchange Kinetics and Work Load During Exercise",
+        "Improving Islet Transplantation Outcomes With Gastrin",
+        "HostDx Sepsis in Patients With Acute Respiratory Infections",
+        "Energy Devices for Rejuvenation",
+        "High School Start Time and Teen Migraine Frequency",
+        "The Natural History of Danon Disease",
+        "Restylane Silk Microinjections to Cheeks",
+        "iBeat Wristwatch Validation Study",
+        "Glucose Control Using 1,5-AG Testing",
+        "Cut Your Blood Pressure 3",
+        "18F-Fluorocholine for the Detection of Parathyroid Adenomas",
+        "Efficacy and Safety of SYN-010 in IBS-C",
+        "Postpartum Care Timing: A Randomized Trial",
+        "Cardiac Recovery Through Dietary Support",
+        "Ford Rumination and Mindfulness Merit",
+        "Effects of Playing Pokemon Go on Physical Activity",
+        "Mobile Virtual Positive Experiences for Anhedonia",
+        "Behavioral Family Therapy and Type One Diabetes",
+        "Sun Safety Skills for Elementary School Students"
+    ] # Studies that the app will pick randomly to name the trial
 }
 
 participants {
@@ -114,5 +199,5 @@ participants {
 ### Run
 
 ``` bash
-$ ./flow-simulator -c testnet.conf
+$ ./pfizer -c testnet.conf
 ```
