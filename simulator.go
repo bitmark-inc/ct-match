@@ -215,15 +215,6 @@ func (s *Simulator) Simulate() error {
 		if err != nil {
 			return err
 		}
-
-		// for offerID, participantAccount := range offerIDs {
-		// 	for _, pp := range participants {
-		// 		if participantAccount == pp.Account.AccountNumber() {
-		// 			pp.AddTransferOffer(offerID)
-		// 			break
-		// 		}
-		// 	}
-		// }
 	}
 
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)

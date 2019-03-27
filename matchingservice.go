@@ -114,51 +114,6 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData() ([]string, error) {
 		}
 	}
 
-	// txs := make(map[string]string)
-	// for trialOfferID, medicalOfferID := range offerIDs {
-	// 	// Accept trial offer id
-	// 	trialTransferOffer, err := m.apiClient.GetTransferOfferById(trialOfferID)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if trialTransferOffer.To == m.Account.AccountNumber() {
-	// 		trialBitmarkInfo, err := bitmark.Get(trialTransferOffer.BitmarkId, true)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		trialTxID, err := util.TryToActionTransfer(trialTransferOffer, "accept", m.Account, m.apiClient)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		fmt.Printf("%s signed for acceptance of consent data bitmark for %s from %s.\n", m.Name, trialBitmarkInfo.Asset.Name, m.Identities[trialTransferOffer.From])
-
-	// 		// Accept medical offer id
-	// 		medicalTransferOffer, err := m.apiClient.GetTransferOfferById(medicalOfferID)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		medicalTxID, err := util.TryToActionTransfer(medicalTransferOffer, "accept", m.Account, m.apiClient)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		medicalBitmarkInfo, err := bitmark.Get(medicalTransferOffer.BitmarkId, true)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		txs[trialTxID] = medicalTxID
-
-	// 		fmt.Printf("%s signed for acceptance of health data bitmark for %s from %s and is evaluating it.\n", m.Name, trialBitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Asset.Registrant])
-
-	// 	}
-
-	// }
-
 	return bitmarkIDs, nil
 }
 
@@ -238,86 +193,6 @@ func (m *MatchingService) EvaluateTrialFromParticipant() error {
 			}
 		}
 	}
-
-	// offerIDs := make(map[string]string)
-	// for trialTx, medicalTx := range txs {
-	// 	txInfo, err := tx.Get(trialTx)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if txInfo.Owner != m.Account.AccountNumber() {
-	// 		continue
-	// 	}
-
-	// 	bitmarkInfo, err := bitmark.Get(txInfo.BitmarkID, true)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if util.RandWithProb(m.conf.MatchDataApprovalProb) {
-	// 		// m.print("Accept the matching for tx: " + trialTx)
-
-	// 		// Send bitmark to its asset's registrant
-	// 		trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, bitmarkInfo.Asset.Registrant, m.Account, m.apiClient)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		// Get bitmark information to print out
-	// 		medicalTxInfo, err := tx.Get(medicalTx)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		// Transfer also the medical data
-	// 		medicalOfferID, err := util.TryToSubmitTransfer(medicalTxInfo.BitmarkID, bitmarkInfo.Asset.Registrant, m.Account, m.apiClient)
-
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		offerIDs[trialOfferID] = medicalOfferID
-
-	// 		fmt.Printf("%s approved health data bitmark for %s and sent it to %s for evaluation.\n", m.Name, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
-	// 		fmt.Printf("%s sent consent bitmark for %s to %s.\n", m.Name, bitmarkInfo.Asset.Name, m.Identities[bitmarkInfo.Asset.Registrant])
-	// 	} else {
-	// 		// m.print("Reject the matching for tx: " + trialTx)
-	// 		// Get previous owner
-	// 		previousTxInfo, err := tx.Get(txInfo.PreviousID)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-	// 		previousOwner := previousTxInfo.Owner
-
-	// 		// Get bitmark id of medical tx
-	// 		medicalTXInfo, err := tx.Get(medicalTx)
-
-	// 		// Transfer bitmarks back to previous owner by one signature
-	// 		// _, err = util.TryToTransferOneSignature(m.Account, txInfo.BitmarkID, previousOwner, m.apiClient)
-	// 		// if err != nil {
-	// 		// 	return nil, err
-	// 		// }
-
-	// 		_, err = util.TryToTransferOneSignature(m.Account, medicalTXInfo.BitmarkID, previousOwner, m.apiClient)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		// Get bitmark information to print out
-	// 		medicalTxInfo, err := tx.Get(medicalTx)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		medicalBitmarkInfo, err := bitmark.Get(medicalTxInfo.BitmarkID, true)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		fmt.Printf("%s rejected health data bitmark for %s from %s. %s has sent the rejected health data bitmark back to %s.\n", m.Name, bitmarkInfo.Asset.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer], m.Name, m.Identities[medicalBitmarkInfo.Bitmark.Issuer])
-	// 	}
-	// }
 
 	return nil
 }

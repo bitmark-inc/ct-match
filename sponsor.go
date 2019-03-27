@@ -127,50 +127,6 @@ func (s *Sponsor) AcceptTrialBackAndMedicalData() ([]string, error) {
 
 	}
 
-	// txs := make(map[string]string)
-	// for trialOfferID, medicalOfferID := range offerIDs {
-	// 	// Accept trial offer id
-	// 	trialTransferOffer, err := s.apiClient.GetTransferOfferById(trialOfferID)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if trialTransferOffer.To == s.Account.AccountNumber() {
-	// 		trialTxID, err := util.TryToActionTransfer(trialTransferOffer, "accept", s.Account, s.apiClient)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		// Accept medical offer id
-	// 		medicalTransferOffer, err := s.apiClient.GetTransferOfferById(medicalOfferID)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		medicalTxID, err := util.TryToActionTransfer(medicalTransferOffer, "accept", s.Account, s.apiClient)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		txs[trialTxID] = medicalTxID
-
-	// 		// Get bitmark info to print out
-	// 		trialBitmarkInfo, err := bitmark.Get(trialTransferOffer.BitmarkId, true)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		medicalBitmarkInfo, err := bitmark.Get(medicalTransferOffer.BitmarkId, true)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		fmt.Printf("%s signed for acceptance of health data bitmark for %s from %s for %s and is evaluating it.\n", s.Name, trialBitmarkInfo.Asset.Name, s.Identities[trialTransferOffer.From], s.Identities[medicalBitmarkInfo.Asset.Registrant])
-	// 		fmt.Printf("%s signed for acceptance of consent bitmark for %s from %s.\n", s.Name, trialBitmarkInfo.Asset.Name, s.Identities[trialBitmarkInfo.Bitmark.Issuer])
-	// 	}
-
-	// }
-
 	s.receivedTrialAndHealthBitmarks = filterredBitmarks
 	return bitmarkIDs, nil
 }
@@ -212,78 +168,6 @@ func (s *Sponsor) EvaluateTrialFromSponsor() error {
 			}
 		}
 	}
-	// offerIDs := make(map[string]string)
-	// for trialTx, medicalTx := range txs {
-	// 	txInfo, err := tx.Get(trialTx)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if txInfo.Owner != s.Account.AccountNumber() {
-	// 		continue
-	// 	}
-
-	// 	bitmarkInfo, err := bitmark.Get(txInfo.BitmarkID, true)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if util.RandWithProb(s.conf.DataApprovalProb) {
-	// 		// Get bitmark id of medical tx
-	// 		medicalTXInfo, err := tx.Get(medicalTx)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		medicalBitmarkInfo, err := bitmark.Get(medicalTXInfo.BitmarkID, true)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		participantAccount := medicalBitmarkInfo.Bitmark.Issuer
-
-	// 		// Send bitmark to its participant
-	// 		trialOfferID, err := util.TryToSubmitTransfer(txInfo.BitmarkID, participantAccount, s.Account, s.apiClient)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		offerIDs[trialOfferID] = participantAccount
-
-	// 	} else {
-	// 		// s.print("Reject the data for tx: " + trialTx)
-	// 		// Get previous owner
-	// 		// previousTxInfo, err := tx.Get(txInfo.PreviousID)
-	// 		// if err != nil {
-	// 		// 	return nil, err
-	// 		// }
-	// 		// previousOwner := previousTxInfo.Owner
-
-	// 		// Get bitmark id of medical tx
-	// 		medicalTXInfo, err := tx.Get(medicalTx)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		medicalBitmarkInfo, err := bitmark.Get(medicalTXInfo.BitmarkID, true)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		// Transfer bitmarks back to previous owner by one signature
-	// 		// _, err = util.TryToTransferOneSignature(s.Account, txInfo.BitmarkID, previousOwner, s.apiClient)
-	// 		// if err != nil {
-	// 		// 	return nil, err
-	// 		// }
-
-	// 		_, err = util.TryToTransferOneSignature(s.Account, medicalTXInfo.BitmarkID, medicalBitmarkInfo.Asset.Registrant, s.apiClient)
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
-
-	// 		fmt.Printf("%s rejected health data bitmark for %s from %s. %s has sent the rejected health data bitmark back to %s.\n", s.Name, bitmarkInfo.Asset.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant], s.Name, s.Identities[medicalBitmarkInfo.Asset.Registrant])
-	// 	}
-	// }
 
 	return nil
 }
