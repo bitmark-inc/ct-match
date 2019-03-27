@@ -43,7 +43,7 @@ $ brew install dep
 $ brew upgrade dep
 ```
 
-*For Linux
+*For Linux:*
 ``` bash
 sudo apt-get install go-dep
 ```
