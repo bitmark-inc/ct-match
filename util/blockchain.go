@@ -148,8 +148,6 @@ func WaitForBitmarkConfirmations(bitmarks []string) {
 			return
 		}
 
-		log.Println("Unconfirmed left:", len(filterredBitmarkIDs))
-
 		time.Sleep(10 * time.Second)
 	}
 }

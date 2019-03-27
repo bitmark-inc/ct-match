@@ -123,7 +123,7 @@ func (s *Simulator) Simulate() error {
 
 	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
-	//Ask for acceptance from participants
+	// Ask for acceptance from participants
 	sendToParticipantBitmarkIDs := make([]string, 0)
 	for _, pp := range participants {
 		trialBitmarkIDs, err := pp.ProcessRecevingTrialBitmark(ProcessReceivingTrialBitmarkFromMatchingService)
@@ -204,6 +204,8 @@ func (s *Simulator) Simulate() error {
 
 		acceptTrialAndMedicalFromSponsorBitmarkIDs = append(acceptTrialAndMedicalFromSponsorBitmarkIDs, bitmarkIDs...)
 	}
+
+	time.Sleep(time.Duration(s.conf.WaitTime) * time.Second)
 
 	util.WaitForBitmarkConfirmations(acceptTrialAndMedicalFromSponsorBitmarkIDs)
 

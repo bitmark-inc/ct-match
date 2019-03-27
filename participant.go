@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 	"github.com/bitmark-inc/bitmark-sdk-go/asset"
@@ -106,7 +105,6 @@ func (p *Participant) SendBackTrialBitmark() error {
 		matchingServiceAccountNumber := consentBitmarkInfo.Issuer
 
 		// Transfer medical bitmark
-		log.Println("Transfer medical bitmark: ", medicalBitmarkID)
 		medicalOfferParam := bitmark.NewOfferParams(matchingServiceAccountNumber, nil)
 		medicalOfferParam.FromBitmark(medicalBitmarkID)
 		medicalOfferParam.Sign(p.Account)
@@ -170,6 +168,9 @@ func (p *Participant) IssueMedicalDataBitmark() ([]string, error) {
 		)
 		issueParam.Sign(p.Account)
 		bitmarkIDs, err := bitmark.Issue(issueParam)
+		if err != nil {
+			return nil, err
+		}
 
 		bitmarkID := bitmarkIDs[0]
 		medicalBitmarkIDs = append(medicalBitmarkIDs, bitmarkID)

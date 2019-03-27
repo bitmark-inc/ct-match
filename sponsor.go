@@ -93,6 +93,7 @@ func (s *Sponsor) AcceptTrialBackAndMedicalData() ([]string, error) {
 		return nil, err
 	}
 	bitmarkIDs := make([]string, 0)
+	filterredBitmarks := make([]*bitmark.Bitmark, 0)
 
 	for _, b := range bitmarks {
 		params := bitmark.NewTransferResponseParams(b, bitmark.Accept)
@@ -101,21 +102,29 @@ func (s *Sponsor) AcceptTrialBackAndMedicalData() ([]string, error) {
 			return nil, err
 		}
 
-		bitmarkIDs = append(bitmarkIDs, b.Id)
-
 		assetType, ok := b.Asset.Metadata["Type"]
 		if ok {
 			switch assetType {
 			case "Trial":
-				fmt.Printf("%s signed for acceptance of consent bitmark for %s from %s.\n", s.Name, b.Asset.Name, s.Identities[b.Offer.From])
+				fmt.Printf("%s signed for acceptance of consent bitmark for %s from %s.\n",
+					s.Name,
+					b.Asset.Name,
+					s.Identities[b.Offer.From])
+				bitmarkIDs = append(bitmarkIDs, b.Id)
+				filterredBitmarks = append(filterredBitmarks, b)
 			case "Health Data":
-				fmt.Printf("%s signed for acceptance of health data bitmark for %s from %s for %s and is evaluating it.\n", s.Name, b.Asset.Name, s.Identities[b.Offer.From], s.Identities[b.Asset.Registrant])
+				fmt.Printf("%s signed for acceptance of health data bitmark for %s from %s for %s and is evaluating it.\n",
+					s.Name,
+					b.Asset.Name,
+					s.Identities[b.Offer.From],
+					s.Identities[b.Asset.Registrant])
+				bitmarkIDs = append(bitmarkIDs, b.Id)
+				filterredBitmarks = append(filterredBitmarks, b)
 			default:
 				fmt.Println("Unknow bitmark")
 			}
 		}
 
-		bitmarkIDs = append(bitmarkIDs, b.Id)
 	}
 
 	// txs := make(map[string]string)
@@ -162,7 +171,7 @@ func (s *Sponsor) AcceptTrialBackAndMedicalData() ([]string, error) {
 
 	// }
 
-	s.receivedTrialAndHealthBitmarks = bitmarks
+	s.receivedTrialAndHealthBitmarks = filterredBitmarks
 	return bitmarkIDs, nil
 }
 
