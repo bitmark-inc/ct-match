@@ -7,7 +7,7 @@ import (
 
 	"github.com/bitmark-inc/bitmark-sdk-go/account"
 	"github.com/bitmark-inc/bitmark-sdk-go/asset"
-	"github.com/bitmark-inc/pfizer/util"
+	"github.com/bitmark-inc/ct-match/util"
 )
 
 type Sponsor struct {

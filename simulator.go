@@ -5,7 +5,7 @@ import (
 	"time"
 
 	sdk "github.com/bitmark-inc/bitmark-sdk-go"
-	"github.com/bitmark-inc/pfizer/util"
+	"github.com/bitmark-inc/ct-match/util"
 )
 
 type Simulator struct {

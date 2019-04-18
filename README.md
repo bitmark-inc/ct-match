@@ -55,9 +55,9 @@ dep ensure
 
 ### Build
 
-Create directory for pfizer project:
+Create directory for ct-match project:
 ``` bash
-$ mkdir -p $GOPATH/src/github.com/bitmark-inc/pfizer
+$ mkdir -p $GOPATH/src/github.com/bitmark-inc/ct-match
 ```
 
 Change to that directory
@@ -67,17 +67,17 @@ $ cd $GOPATH/src/github.com/bitmark-inc
 
 Checkout source code via ssh:
 ``` bash
-$ git clone git@github.com:bitmark-inc/pfizer.git
+$ git clone git@github.com:bitmark-inc/ct-match.git
 ```
 
 Or you can checkout source code via git https:
 ``` bash
-$ git clone https://github.com/bitmark-inc/pfizer.git
+$ git clone https://github.com/bitmark-inc/ct-match.git
 ```
 
 Build the project:
 ``` bash
-$ cd $GOPATH/src/github.com/bitmark-inc/pfizer
+$ cd $GOPATH/src/github.com/bitmark-inc/ct-match
 $ go build
 ```
 
@@ -199,5 +199,5 @@ participants {
 ### Run
 
 ``` bash
-$ ./pfizer -c testnet.conf
+$ ./ct-match -c testnet.conf
 ```
