@@ -1,6 +1,6 @@
-# Pfizer projects
+# Clinical Trial Matching
 
-## Pfizer simulator
+## Clinical Trial Matching simulator
 ### Prerequisite
 
 - Go 1.9+
