@@ -10,16 +10,16 @@ import (
 	"github.com/bitmark-inc/bitmark-sdk-go/tx"
 )
 
-func apiEndpoint(network string) string {
-	if network == "livenet" {
-		return "https://api.bitmark.com"
-	} else {
-		return "https://api.test.bitmark.com"
-	}
-}
+// func apiEndpoint(network string) string {
+// 	if network == "livenet" {
+// 		return "https://api.bitmark.com"
+// 	} else {
+// 		return "https://api.test.bitmark.com"
+// 	}
+// }
 
 func isTXConfirmed(txID string) (bool, error) {
-	result, err := tx.Get(txID, false)
+	result, err := tx.Get(txID)
 	return result.Status == "confirmed", err
 }
 
@@ -87,7 +87,7 @@ func WaitForConfirmations(txs []string) {
 }
 
 func isBitmarkConfirmed(bitmarkID string) (bool, error) {
-	result, err := bitmark.Get(bitmarkID, false)
+	result, err := bitmark.Get(bitmarkID)
 	if err != nil {
 		fmt.Printf("Get bitmark id: %s, error: %v", bitmarkID, err)
 		return false, err
@@ -103,7 +103,7 @@ func filterUnconfirmedBitmarks(bitmarks []string) []string {
 	for _, bitmarkID := range bitmarks {
 		go func(bitmarkID string) {
 			defer wg.Done()
-			bitmarkInfo, err := bitmark.Get(bitmarkID, false)
+			bitmarkInfo, err := bitmark.Get(bitmarkID)
 			if err != nil {
 				log.Println(err)
 			}
@@ -130,7 +130,7 @@ func filterUnconfirmedBitmarks(bitmarks []string) []string {
 		}
 
 		if b.Status != "settled" {
-			filterredBitmarkID = append(filterredBitmarkID, b.Id)
+			filterredBitmarkID = append(filterredBitmarkID, b.ID)
 		}
 	}
 
