@@ -3,8 +3,7 @@
 ## Clinical Trial Matching simulator
 ### Prerequisite
 
-- Go 1.9+
-- Go dep (https://golang.github.io/dep/)
+- Go 1.11+
 
 ### How to install Go?
 
@@ -33,24 +32,6 @@ Add PATH to your .bashrc or .zshrc if you are using ohmyzsh :
 export GOROOT=/usr/local/opt/go/libexec
 export GOPATH=$HOME/.go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
-```
-
-#### Install dependencies
-*For MacOS, using Brew:*
-
-``` bash
-$ brew install dep
-$ brew upgrade dep
-```
-
-*For Linux:*
-``` bash
-sudo apt-get install go-dep
-```
-
-On project folder, enter this command:
-``` bash
-dep ensure
 ```
 
 ### Build

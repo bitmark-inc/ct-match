@@ -52,9 +52,13 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int) ([]string, error
 		OfferTo(p.Account.AccountNumber()).
 		LoadAsset(true)
 
-	bitmarks, err := bitmark.List(builder)
+	bitmarks, assets, err := bitmark.List(builder)
 	if err != nil {
 		return nil, err
+	}
+	referencedAssets := make(map[string]*asset.Asset)
+	for _, asset := range assets {
+		referencedAssets[asset.ID] = asset
 	}
 
 	for _, b := range bitmarks {
@@ -63,29 +67,29 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int) ([]string, error
 		if willAccept {
 			offerResponseParam := bitmark.NewTransferResponseParams(b, bitmark.Accept)
 			offerResponseParam.Sign(p.Account)
-			if err := bitmark.Respond(offerResponseParam); err != nil {
+			if _, err := bitmark.Respond(offerResponseParam); err != nil {
 				return nil, err
 			}
 
 			switch fromcase {
 			case ProcessReceivingTrialBitmarkFromMatchingService:
-				fmt.Printf("%s accepted consent bitmark for %s from %s and is considering participation.\n", p.Name, b.Asset.Name, p.Identities[b.Offer.From])
-				bitmarkIDs = append(bitmarkIDs, b.Id)
+				fmt.Printf("%s accepted consent bitmark for %s from %s and is considering participation.\n", p.Name, referencedAssets[b.AssetID].Name, p.Identities[b.Offer.From])
+				bitmarkIDs = append(bitmarkIDs, b.ID)
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				fmt.Printf("%s signed for acceptance of consent bitmark from %s and has been successfully entered as a participant in %s.\n", p.Name, p.Identities[b.Offer.From], b.Asset.Name)
+				fmt.Printf("%s signed for acceptance of consent bitmark from %s and has been successfully entered as a participant in %s.\n", p.Name, p.Identities[b.Offer.From], referencedAssets[b.AssetID].Name)
 			}
 		} else {
 			offerResponseParam := bitmark.NewTransferResponseParams(b, bitmark.Reject)
 			offerResponseParam.Sign(p.Account)
-			if err := bitmark.Respond(offerResponseParam); err != nil {
+			if _, err := bitmark.Respond(offerResponseParam); err != nil {
 				return nil, err
 			}
 
 			switch fromcase {
 			case ProcessReceivingTrialBitmarkFromMatchingService:
-				fmt.Printf("%s rejected consent bitmark for %s from %s.\n", p.Name, b.Asset.Name, p.Identities[b.Offer.From])
+				fmt.Printf("%s rejected consent bitmark for %s from %s.\n", p.Name, referencedAssets[b.AssetID].Name, p.Identities[b.Offer.From])
 			case ProcessReceivingTrialBitmarkFromSponsor:
-				fmt.Printf("%s has opted to reject acceptance of consent bitmark from %s and refused the invitation to participate in %s.\n", p.Name, p.Identities[b.Offer.From], b.Asset.Name)
+				fmt.Printf("%s has opted to reject acceptance of consent bitmark from %s and refused the invitation to participate in %s.\n", p.Name, p.Identities[b.Offer.From], referencedAssets[b.AssetID].Name)
 			}
 		}
 	}
@@ -97,7 +101,7 @@ func (p *Participant) ProcessRecevingTrialBitmark(fromcase int) ([]string, error
 
 func (p *Participant) SendBackTrialBitmark() error {
 	for consentBitmarkID, medicalBitmarkID := range p.IssuedMedicalData {
-		consentBitmarkInfo, err := bitmark.Get(consentBitmarkID, true)
+		consentBitmarkInfo, err := bitmark.Get(consentBitmarkID)
 		if err != nil {
 			return err
 		}
@@ -105,7 +109,7 @@ func (p *Participant) SendBackTrialBitmark() error {
 		matchingServiceAccountNumber := consentBitmarkInfo.Issuer
 
 		// Transfer medical bitmark
-		medicalOfferParam := bitmark.NewOfferParams(matchingServiceAccountNumber, nil)
+		medicalOfferParam, _ := bitmark.NewOfferParams(matchingServiceAccountNumber, nil)
 		medicalOfferParam.FromBitmark(medicalBitmarkID)
 		medicalOfferParam.Sign(p.Account)
 		if err := bitmark.Offer(medicalOfferParam); err != nil {
@@ -113,7 +117,7 @@ func (p *Participant) SendBackTrialBitmark() error {
 		}
 
 		// Also transfer the consent bitmark
-		consentOfferParam := bitmark.NewOfferParams(matchingServiceAccountNumber, nil)
+		consentOfferParam, _ := bitmark.NewOfferParams(matchingServiceAccountNumber, nil)
 		consentOfferParam.FromBitmark(consentBitmarkID)
 		consentOfferParam.Sign(p.Account)
 		if err := bitmark.Offer(consentOfferParam); err != nil {
@@ -121,14 +125,19 @@ func (p *Participant) SendBackTrialBitmark() error {
 		}
 
 		// Get bitmark info of trial
-		medicalBitmarkInfo, err := bitmark.Get(medicalBitmarkID, true)
+		medicalBitmarkInfo, err := bitmark.Get(medicalBitmarkID)
+		if err != nil {
+			return err
+		}
+
+		medicalAsset, err := asset.Get(medicalBitmarkInfo.AssetID)
 		if err != nil {
 			return err
 		}
 
 		identityForReceiver := p.Identities[matchingServiceAccountNumber]
 
-		fmt.Printf("%s issued health data bitmark for %s and sent it to %s for evaluation along with consent bitmark.\n", p.Name, medicalBitmarkInfo.Asset.Name, identityForReceiver)
+		fmt.Printf("%s issued health data bitmark for %s and sent it to %s for evaluation along with consent bitmark.\n", p.Name, medicalAsset.Name, identityForReceiver)
 	}
 	return nil
 }
@@ -140,7 +149,11 @@ func (p *Participant) IssueMedicalDataBitmark() ([]string, error) {
 			continue
 		}
 
-		consentBitmarkInfo, err := bitmark.Get(consentBitmarkID, true)
+		consentBitmarkInfo, err := bitmark.Get(consentBitmarkID)
+		if err != nil {
+			return nil, err
+		}
+		consentAsset, err := asset.Get(consentBitmarkInfo.AssetID)
 		if err != nil {
 			return nil, err
 		}
@@ -148,21 +161,21 @@ func (p *Participant) IssueMedicalDataBitmark() ([]string, error) {
 		medicalContent := "MEDICAL DATA\n" + util.RandStringBytesMaskImprSrc(1000)
 
 		assetParam, err := asset.NewRegistrationParams(
-			"health_data_"+p.Name+"_"+p.Identities[consentBitmarkInfo.Asset.Registrant],
+			"health_data_"+p.Name+"_"+p.Identities[consentAsset.Registrant],
 			map[string]string{
 				"Type":          "Health Data",
 				"Trial Bitmark": consentBitmarkID,
 			},
 		)
 
-		assetParam.SetFingerprint([]byte(medicalContent))
+		assetParam.SetFingerprintFromData([]byte(medicalContent))
 		assetParam.Sign(p.Account)
 		assetID, err := asset.Register(assetParam)
 		if err != nil {
 			return nil, err
 		}
 
-		issueParam := bitmark.NewIssuanceParams(
+		issueParam, _ := bitmark.NewIssuanceParams(
 			assetID,
 			1,
 		)

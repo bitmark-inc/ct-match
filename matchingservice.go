@@ -45,7 +45,7 @@ func (m *MatchingService) IssueMoreTrial(assetIDs []string) ([]string, error) {
 		if util.RandWithProb(m.conf.SelectAssetProb) {
 			for _, p := range m.Participants {
 				if util.RandWithProb(m.conf.MatchProb) {
-					issueParam := bitmark.NewIssuanceParams(assetID, 1)
+					issueParam, _ := bitmark.NewIssuanceParams(assetID, 1)
 					issueParam.Sign(m.Account)
 
 					bitmarkIDs, err := bitmark.Issue(issueParam)
@@ -69,7 +69,7 @@ func (m *MatchingService) IssueMoreTrial(assetIDs []string) ([]string, error) {
 
 func (m *MatchingService) SendTrialToParticipant() error {
 	for issueMoreBitmarkID, pp := range m.issueMoreBitmarkIDs {
-		offerParam := bitmark.NewOfferParams(pp.Account.AccountNumber(), nil)
+		offerParam, _ := bitmark.NewOfferParams(pp.Account.AccountNumber(), nil)
 		offerParam.FromBitmark(issueMoreBitmarkID)
 		offerParam.Sign(m.Account)
 		if err := bitmark.Offer(offerParam); err != nil {
@@ -85,9 +85,13 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData() ([]string, error) {
 		OfferTo(m.Account.AccountNumber()).
 		LoadAsset(true)
 
-	bitmarks, err := bitmark.List(builder)
+	bitmarks, assets, err := bitmark.List(builder)
 	if err != nil {
 		return nil, err
+	}
+	referencedAssets := make(map[string]*asset.Asset)
+	for _, asset := range assets {
+		referencedAssets[asset.ID] = asset
 	}
 
 	bitmarkIDs := make([]string, 0)
@@ -95,19 +99,19 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData() ([]string, error) {
 	for _, b := range bitmarks {
 		params := bitmark.NewTransferResponseParams(b, bitmark.Accept)
 		params.Sign(m.Account)
-		if err := bitmark.Respond(params); err != nil {
+		if _, err := bitmark.Respond(params); err != nil {
 			return nil, err
 		}
 
-		bitmarkIDs = append(bitmarkIDs, b.Id)
+		bitmarkIDs = append(bitmarkIDs, b.ID)
 
-		assetType, ok := b.Asset.Metadata["Type"]
+		assetType, ok := referencedAssets[b.AssetID].Metadata["Type"]
 		if ok {
 			switch assetType {
 			case "Trial":
-				fmt.Printf("%s signed for acceptance of consent data bitmark for %s from %s.\n", m.Name, b.Asset.Name, m.Identities[b.Offer.From])
+				fmt.Printf("%s signed for acceptance of consent data bitmark for %s from %s.\n", m.Name, referencedAssets[b.AssetID].Name, m.Identities[b.Offer.From])
 			case "Health Data":
-				fmt.Printf("%s signed for acceptance of health data bitmark for %s from %s and is evaluating it.\n", m.Name, b.Asset.Name, m.Identities[b.Offer.From])
+				fmt.Printf("%s signed for acceptance of health data bitmark for %s from %s and is evaluating it.\n", m.Name, referencedAssets[b.AssetID].Name, m.Identities[b.Offer.From])
 			default:
 				fmt.Println("Unknow bitmark")
 			}
@@ -120,55 +124,63 @@ func (m *MatchingService) AcceptTrialBackAndMedicalData() ([]string, error) {
 func (m *MatchingService) EvaluateTrialFromParticipant() error {
 	// Query all owning bitmarks
 	builder := bitmark.NewQueryParamsBuilder().
-		OwnedBy(m.Account.AccountNumber(), false).
+		OwnedBy(m.Account.AccountNumber()).
 		LoadAsset(true)
 
-	bitmarks, err := bitmark.List(builder)
+	bitmarks, assets, err := bitmark.List(builder)
 	if err != nil {
 		return err
 	}
+	referencedAssets := make(map[string]*asset.Asset)
+	for _, asset := range assets {
+		referencedAssets[asset.ID] = asset
+	}
 
 	for _, b := range bitmarks {
-		assetType, ok := b.Asset.Metadata["Type"]
+		assetType, ok := referencedAssets[b.AssetID].Metadata["Type"]
 		if ok && assetType == "Health Data" {
-			consentBitmarkID, ok := b.Asset.Metadata["Trial Bitmark"]
+			consentBitmarkID, ok := referencedAssets[b.AssetID].Metadata["Trial Bitmark"]
 			if !ok {
 				continue // Continue if cannot find consent bitmark
 			}
 
-			consentBitmark, err := bitmark.Get(consentBitmarkID, true)
+			consentBitmark, err := bitmark.Get(consentBitmarkID)
+			if err != nil {
+				return err
+			}
+			consentAsset, err := asset.Get(consentBitmark.AssetID)
 			if err != nil {
 				return err
 			}
 
 			if util.RandWithProb(m.conf.MatchDataApprovalProb) {
 				// Send to sponsor with two signatures transfer
-				sponsorAccountNumber := consentBitmark.Asset.Registrant
+				sponsorAccountNumber := referencedAssets[b.AssetID].Registrant
 
 				// Transfer medical bitmark
-				medicalOfferParam := bitmark.NewOfferParams(sponsorAccountNumber, nil)
-				medicalOfferParam.FromBitmark(b.Id)
+				medicalOfferParam, _ := bitmark.NewOfferParams(sponsorAccountNumber, nil)
+				medicalOfferParam.FromBitmark(b.ID)
 				medicalOfferParam.Sign(m.Account)
 				if err := bitmark.Offer(medicalOfferParam); err != nil {
 					return err
 				}
 
 				// Also transfer the consent bitmark
-				consentOfferParam := bitmark.NewOfferParams(sponsorAccountNumber, nil)
-				consentOfferParam.FromBitmark(consentBitmark.Id)
+				consentOfferParam, _ := bitmark.NewOfferParams(sponsorAccountNumber, nil)
+				consentOfferParam.FromBitmark(consentBitmark.ID)
 				consentOfferParam.Sign(m.Account)
 				if err := bitmark.Offer(consentOfferParam); err != nil {
 					return err
 				}
 
-				fmt.Printf("%s approved health data bitmark for %s and sent it to %s for evaluation.\n", m.Name, b.Asset.Name, m.Identities[sponsorAccountNumber])
-				fmt.Printf("%s sent consent bitmark for %s to %s.\n", m.Name, consentBitmark.Asset.Name, m.Identities[sponsorAccountNumber])
+				fmt.Printf("%s approved health data bitmark for %s and sent it to %s for evaluation.\n", m.Name, referencedAssets[b.AssetID].Name, m.Identities[sponsorAccountNumber])
+				fmt.Printf("%s sent consent bitmark for %s to %s.\n", m.Name, consentAsset.Name, m.Identities[sponsorAccountNumber])
 			} else {
 				// Send to health data bitmark to participant with one signature transfer
-				participantAccountNumber := b.Asset.Registrant
+				participantAccountNumber := referencedAssets[b.AssetID].Registrant
 
-				medicalTransferParam := bitmark.NewTransferParams(participantAccountNumber)
-				medicalTransferParam.FromBitmark(b.Id)
+				medicalTransferParam, _ := bitmark.NewTransferParams(participantAccountNumber)
+				medicalTransferParam.FromBitmark(b.ID)
 				medicalTransferParam.Sign(m.Account)
 				_, err := bitmark.Transfer(medicalTransferParam)
 				if err != nil {
@@ -176,7 +188,7 @@ func (m *MatchingService) EvaluateTrialFromParticipant() error {
 				}
 
 				// Send consent into trash bin account (all-zero pubkey account)
-				consentTransferParam := bitmark.NewTransferParams(m.conf.TrashBinAccount)
+				consentTransferParam, _ := bitmark.NewTransferParams(m.conf.TrashBinAccount)
 				consentTransferParam.FromBitmark(consentBitmarkID)
 				consentTransferParam.Sign(m.Account)
 				_, err = bitmark.Transfer(consentTransferParam)
@@ -186,7 +198,7 @@ func (m *MatchingService) EvaluateTrialFromParticipant() error {
 
 				fmt.Printf("%s rejected health data bitmark for %s from %s. %s has sent the rejected health data bitmark back to %s.\n",
 					m.Name,
-					b.Asset.Name,
+					referencedAssets[b.AssetID].Name,
 					m.Identities[b.Issuer],
 					m.Name,
 					m.Identities[b.Issuer])
